@@ -1,0 +1,114 @@
+import Foundation
+import ZvukMusic
+
+@MainActor
+@Observable
+final class AppState {
+    var isAuthenticated = false
+    var isRestoringSession = true
+    var currentUser: ProfileResult?
+    var selectedDestination: NavigationDestination? = .search {
+        didSet {
+            if !isNavigatingHistory {
+                // Push to history stack when navigating normally
+                if let oldValue = oldValue {
+                    backStack.append(oldValue)
+                    forwardStack.removeAll()
+                }
+            }
+            saveDestination()
+        }
+    }
+
+    private(set) var backStack: [NavigationDestination] = []
+    private(set) var forwardStack: [NavigationDestination] = []
+    private var isNavigatingHistory = false
+
+    var hasUnreadNews = false
+
+    var canGoBack: Bool { !backStack.isEmpty }
+    var canGoForward: Bool { !forwardStack.isEmpty }
+
+    func goBack() {
+        guard let previous = backStack.popLast() else { return }
+        if let current = selectedDestination {
+            forwardStack.append(current)
+        }
+        isNavigatingHistory = true
+        selectedDestination = previous
+        isNavigatingHistory = false
+    }
+
+    func goForward() {
+        guard let next = forwardStack.popLast() else { return }
+        if let current = selectedDestination {
+            backStack.append(current)
+        }
+        isNavigatingHistory = true
+        selectedDestination = next
+        isNavigatingHistory = false
+    }
+
+    private(set) var client: ZvukClient?
+    private let authService = AuthService()
+
+    func restoreSession() async {
+        guard !isAuthenticated else { return }
+
+        isRestoringSession = true
+        defer { isRestoringSession = false }
+
+        restoreDestination()
+
+        guard let token = authService.loadToken() else { return }
+
+        do {
+            let profile = try await authService.validateToken(token)
+            self.client = ZvukClient(token: token, rateLimit: 5)
+            self.currentUser = profile
+            self.isAuthenticated = true
+        } catch {
+            authService.clearToken()
+        }
+    }
+
+    func login(token: String) async throws {
+        let profile = try await authService.validateToken(token)
+        authService.saveToken(token)
+        self.client = ZvukClient(token: token, rateLimit: 5)
+        self.currentUser = profile
+        self.isAuthenticated = true
+    }
+
+    func logout() {
+        authService.clearToken()
+        self.client = nil
+        self.currentUser = nil
+        self.isAuthenticated = false
+        self.selectedDestination = .search
+    }
+
+    // MARK: - Unread News
+
+    func checkUnreadNews() async {
+        guard let client else { return }
+        hasUnreadNews = (try? await client.hasUnreadNotifications()) ?? false
+    }
+
+    // MARK: - Destination Persistence
+
+    private func saveDestination() {
+        guard let dest = selectedDestination,
+              let data = try? JSONEncoder().encode(dest) else {
+            UserDefaults.standard.removeObject(forKey: "lastDestination")
+            return
+        }
+        UserDefaults.standard.set(data, forKey: "lastDestination")
+    }
+
+    private func restoreDestination() {
+        guard let data = UserDefaults.standard.data(forKey: "lastDestination"),
+              let dest = try? JSONDecoder().decode(NavigationDestination.self, from: data) else { return }
+        selectedDestination = dest
+    }
+}

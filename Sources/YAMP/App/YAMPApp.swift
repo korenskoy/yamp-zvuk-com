@@ -1,0 +1,115 @@
+import SwiftUI
+
+@main
+struct YAMPApp: App {
+    init() {
+        NSWindow.allowsAutomaticWindowTabbing = false
+    }
+
+    @State private var appState = AppState()
+    @State private var appSettings = AppSettings()
+    @State private var playerService = PlayerService()
+    @State private var collectionService = CollectionService()
+    @State private var cacheService = CacheService()
+    @State private var logStore = LogStore()
+    @State private var historyStore = ListeningHistoryStore()
+    @State private var lastFMService = LastFMService()
+
+    var body: some Scene {
+        WindowGroup {
+            Group {
+                if appState.isRestoringSession {
+                    SplashView()
+                } else if appState.isAuthenticated {
+                    ContentView()
+                } else {
+                    AuthView()
+                }
+            }
+            .environment(appState)
+            .environment(appSettings)
+            .environment(playerService)
+            .environment(collectionService)
+            .environment(cacheService)
+            .environment(logStore)
+            .environment(historyStore)
+            .environment(lastFMService)
+            .task {
+                // Activate as regular app (show in Dock with icon and menu)
+                NSApplication.shared.setActivationPolicy(.regular)
+                NSApplication.shared.activate(ignoringOtherApps: true)
+
+                // Use thin overlay scrollbars
+                UserDefaults.standard.set("WhenScrolling", forKey: "AppleShowScrollBars")
+
+                guard !appState.isAuthenticated else { return }
+
+                lastFMService.configure(logStore: logStore)
+                playerService.configure(appState: appState, settings: appSettings, cache: cacheService, history: historyStore, lastFM: lastFMService)
+                cacheService.configure(appState: appState)
+                collectionService.configure(cache: cacheService, lastFM: lastFMService, settings: appSettings)
+                await appState.restoreSession()
+                logStore.attach(to: appState.client)
+                if appState.isAuthenticated {
+                    await collectionService.loadCollection(client: appState.client)
+                    await appState.checkUnreadNews()
+                }
+            }
+        }
+        .windowStyle(.titleBar)
+        .windowToolbarStyle(.unified)
+        .defaultSize(width: 1000, height: 700)
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("О Звук [unofficial]") {
+                    let credits = NSMutableAttributedString(string: "Все права на контент принадлежат ")
+                    let link = NSAttributedString(
+                        string: "Zvuk.com",
+                        attributes: [.link: URL(string: "https://zvuk.com")!]
+                    )
+                    credits.append(link)
+                    NSApplication.shared.orderFrontStandardAboutPanel(options: [
+                        .applicationName: "Звук [unofficial]",
+                        .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0",
+                        .credits: credits,
+                    ])
+                }
+            }
+            CommandGroup(replacing: .newItem) {}
+            CommandGroup(replacing: .pasteboard) {}
+            CommandGroup(replacing: .undoRedo) {}
+            CommandGroup(replacing: .toolbar) {}
+            CommandGroup(replacing: .sidebar) {}
+            CommandGroup(replacing: .windowArrangement) {}
+            CommandGroup(replacing: .help) {}
+            CommandMenu("Воспроизведение") {
+                Button("Пауза / Играть") {
+                    playerService.togglePlayPause()
+                }
+                .keyboardShortcut(" ", modifiers: [])
+
+                Button("Следующий трек") {
+                    playerService.next()
+                }
+                .keyboardShortcut(.rightArrow, modifiers: .command)
+
+                Button("Предыдущий трек") {
+                    playerService.previous()
+                }
+                .keyboardShortcut(.leftArrow, modifiers: .command)
+
+                Divider()
+
+                Button("Громче") {
+                    playerService.adjustVolume(by: 0.1)
+                }
+                .keyboardShortcut(.upArrow, modifiers: .command)
+
+                Button("Тише") {
+                    playerService.adjustVolume(by: -0.1)
+                }
+                .keyboardShortcut(.downArrow, modifiers: .command)
+            }
+        }
+    }
+}

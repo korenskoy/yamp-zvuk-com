@@ -1,0 +1,37 @@
+import Foundation
+import ZvukMusic
+
+@MainActor
+@Observable
+final class ArtistViewModel {
+    let artistId: String
+    var artist: Artist?
+    var isLoading = false
+    var error: String?
+
+    var subscriberCount: Int? {
+        artist?.collectionItemData?.likesCount
+    }
+
+    init(artistId: String) {
+        self.artistId = artistId
+    }
+
+    func load(cache: CacheService) async {
+        isLoading = true
+        error = nil
+        defer { isLoading = false }
+
+        do {
+            artist = try await cache.getArtist(
+                artistId,
+                withReleases: true,
+                withPopularTracks: true,
+                withRelatedArtists: true,
+                withDescription: true
+            )
+        } catch {
+            self.error = String(describing: error)
+        }
+    }
+}

@@ -1,0 +1,245 @@
+import SwiftUI
+import ZvukMusic
+
+private struct LiquidGlassBarModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *) {
+            content
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                .padding(.horizontal, 8)
+                .padding(.bottom, 4)
+        } else {
+            content
+                .background(.bar)
+        }
+    }
+}
+
+struct PlayerBarView: View {
+    @Environment(AppState.self) private var appState
+    @Environment(AppSettings.self) private var appSettings
+    @Environment(PlayerService.self) private var playerService
+    @Environment(LastFMService.self) private var lastFMService
+    @State private var showQueue = false
+    @State private var showCover = false
+    @State private var showProgress = false
+
+    var body: some View {
+        if let track = playerService.currentTrack {
+            VStack(spacing: 0) {
+                if #unavailable(macOS 26.0) {
+                    Divider()
+                }
+
+                HStack(spacing: 16) {
+                    trackInfo(track)
+
+                    Spacer()
+
+                    PlayerControlsView()
+
+                    Spacer()
+
+                    HStack(spacing: 12) {
+                        VolumeControlView()
+
+                        Button {
+                            appState.selectedDestination = .nowPlaying
+                        } label: {
+                            Image(systemName: "text.quote")
+                                .font(.callout)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Текст песни")
+
+                        Button {
+                            showQueue.toggle()
+                        } label: {
+                            Image(systemName: "list.bullet")
+                                .font(.callout)
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showQueue) {
+                            QueueView()
+                        }
+
+                        Button {
+                            guard let track = playerService.currentTrack else { return }
+                            Task {
+                                guard let client = appState.client else { return }
+                                let result = try? await client.getRadioByTrack(track.id)
+                                if let tracks = result?.tracks, !tracks.isEmpty {
+                                    let simple = tracks.map {
+                                        SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
+                                                    explicit: $0.explicit, artists: $0.artists, release: $0.release)
+                                    }
+                                    playerService.playQueue(
+                                        simple,
+                                        context: .radioTrack(id: track.id)
+                                    )
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "dot.radiowaves.left.and.right")
+                                .font(.callout)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Радио по треку")
+
+                        if lastFMService.isConnected && appSettings.isScrobblingEnabled {
+                            LastFMIcon()
+                                .fill(Color.primary)
+                                .frame(width: 12, height: 12)
+                                .opacity(lastFMService.scrobbleState == .scrobbled ? 1 : 0.2)
+                                .help(lastFMService.scrobbleState == .scrobbled ? "Заскробблено" : "Ожидание скробблинга")
+                                .animation(.easeInOut(duration: 0.3), value: lastFMService.scrobbleState == .scrobbled)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .overlay(alignment: .bottom) {
+                    if showProgress {
+                        progressOverlay
+                            .transition(.opacity)
+                            .allowsHitTesting(false)
+                    }
+                }
+
+                ProgressBarView(isExpanded: $showProgress)
+                    .padding(.horizontal, 16)
+            }
+            .modifier(LiquidGlassBarModifier())
+            .animation(.easeInOut(duration: 0.2), value: showProgress)
+        }
+    }
+
+    private var progressOverlay: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Text(formatTime(isSeeking: false))
+                Spacer()
+                Text(formatRemainingTime())
+            }
+            .font(.caption.monospacedDigit())
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 14)
+        }
+        .background(
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: Color(.windowBackgroundColor).opacity(0.7), location: 0.3),
+                    .init(color: Color(.windowBackgroundColor), location: 0.6),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        )
+    }
+
+    private func formatTime(isSeeking: Bool) -> String {
+        let time = playerService.currentTime
+        return Self.formatTime(time)
+    }
+
+    private func formatRemainingTime() -> String {
+        let remaining = playerService.duration - playerService.currentTime
+        return Self.formatTime(remaining, negative: true)
+    }
+
+    private static func formatTime(_ time: Double, negative: Bool = false) -> String {
+        guard time.isFinite && time >= 0 else { return negative ? "-0:00" : "0:00" }
+        let total = Int(time)
+        let prefix = negative ? "-" : ""
+        if total >= 3600 {
+            return String(format: "%@%d:%02d:%02d", prefix, total / 3600, (total % 3600) / 60, total % 60)
+        }
+        return String(format: "%@%d:%02d", prefix, total / 60, total % 60)
+    }
+
+    private func trackInfo(_ track: SimpleTrack) -> some View {
+        HStack(spacing: 10) {
+            coverImage(track)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(track.title)
+                    .font(.callout.weight(.medium))
+                    .lineLimit(1)
+                    .onTapGesture {
+                        if let releaseId = track.release?.id {
+                            appState.selectedDestination = .release(id: releaseId)
+                        }
+                    }
+                    .onHover { inside in
+                        if track.release != nil {
+                            NSCursor.pointingHand.set()
+                            if !inside { NSCursor.arrow.set() }
+                        }
+                    }
+
+                artistsLine(track.artists)
+            }
+        }
+        .frame(minWidth: 180, alignment: .leading)
+    }
+
+    private func coverImage(_ track: SimpleTrack) -> some View {
+        Group {
+            if let imageURL = track.release?.image?.getURL(width: 80, height: 80),
+               let url = URL(string: imageURL) {
+                CachedAsyncImage(url: url) { image in
+                    image
+                } placeholder: {
+                    coverPlaceholder
+                }
+            } else {
+                coverPlaceholder
+            }
+        }
+        .frame(width: 40, height: 40)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .onTapGesture {
+            if track.release?.image != nil {
+                showCover = true
+            }
+        }
+        .sheet(isPresented: $showCover) {
+            CoverSheetView(track: track)
+        }
+    }
+
+    private func artistsLine(_ artists: [SimpleArtist]) -> some View {
+        HStack(spacing: 0) {
+            ForEach(Array(artists.enumerated()), id: \.element.id) { index, artist in
+                if index > 0 {
+                    Text(", ")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Text(artist.title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .onHover { inside in
+                        if inside { NSCursor.pointingHand.set() } else { NSCursor.arrow.set() }
+                    }
+                    .onTapGesture {
+                        appState.selectedDestination = .artist(id: artist.id)
+                    }
+            }
+        }
+        .lineLimit(1)
+    }
+
+    private var coverPlaceholder: some View {
+        RoundedRectangle(cornerRadius: 6)
+            .fill(.quaternary)
+            .overlay {
+                Image(systemName: "music.note")
+                    .foregroundStyle(.secondary)
+            }
+    }
+}
