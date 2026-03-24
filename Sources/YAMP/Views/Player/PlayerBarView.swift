@@ -33,14 +33,13 @@ struct PlayerBarView: View {
 
                 HStack(spacing: 16) {
                     trackInfo(track)
-
-                    Spacer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                     PlayerControlsView()
-
-                    Spacer()
+                        .fixedSize()
 
                     HStack(spacing: 12) {
+                        Spacer()
                         VolumeControlView()
 
                         Button {
@@ -95,6 +94,7 @@ struct PlayerBarView: View {
                                 .animation(.easeInOut(duration: 0.3), value: lastFMService.scrobbleState == .scrobbled)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
@@ -184,7 +184,7 @@ struct PlayerBarView: View {
                 artistsLine(track.artists)
             }
         }
-        .frame(minWidth: 180, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func coverImage(_ track: SimpleTrack) -> some View {
