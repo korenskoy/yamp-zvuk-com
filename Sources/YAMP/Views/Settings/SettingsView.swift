@@ -98,7 +98,12 @@ struct SettingsView: View {
 
             Section("О приложении") {
                 LabeledContent("Версия", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—")
-                LabeledContent("Библиотека", value: "ZvukMusic (Swift)")
+                LabeledContent("Исходный код") {
+                    Link("GitHub", destination: URL(string: "https://github.com/korenskoy/yamp-zvuk-com")!)
+                }
+                LabeledContent("Библиотека") {
+                    Link("ZvukMusic (Swift)", destination: URL(string: "https://github.com/korenskoy/zvuk-swift")!)
+                }
 
                 if let info = featuredInfo {
                     if let country = info.country {

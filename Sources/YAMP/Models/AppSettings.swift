@@ -6,13 +6,27 @@ import ZvukMusic
 @Observable
 final class AppSettings {
     var preferredQuality: StreamQuality {
-        get { StreamQuality(rawValue: _qualityRaw) ?? .high }
-        set { _qualityRaw = newValue.rawValue }
+        get {
+            access(keyPath: \.preferredQuality)
+            return StreamQuality(rawValue: _qualityRaw) ?? .high
+        }
+        set {
+            withMutation(keyPath: \.preferredQuality) {
+                _qualityRaw = newValue.rawValue
+            }
+        }
     }
 
     var volume: Double {
-        get { _volume }
-        set { _volume = newValue }
+        get {
+            access(keyPath: \.volume)
+            return _volume
+        }
+        set {
+            withMutation(keyPath: \.volume) {
+                _volume = newValue
+            }
+        }
     }
 
     @ObservationIgnored
