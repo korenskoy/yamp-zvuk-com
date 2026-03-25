@@ -62,12 +62,21 @@ struct YAMPApp: App {
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("О Звук [unofficial]") {
-                    let credits = NSMutableAttributedString(string: "Все права на контент принадлежат ")
-                    let link = NSAttributedString(
+                    let paragraphStyle = NSMutableParagraphStyle()
+                    paragraphStyle.alignment = .center
+                    let credits = NSMutableAttributedString(string: "Все права на контент принадлежат ", attributes: [.paragraphStyle: paragraphStyle])
+                    let zvukLink = NSAttributedString(
                         string: "Zvuk.com",
-                        attributes: [.link: URL(string: "https://zvuk.com")!]
+                        attributes: [.link: URL(string: "https://zvuk.com")!, .paragraphStyle: paragraphStyle]
                     )
-                    credits.append(link)
+                    credits.append(zvukLink)
+                    credits.append(NSAttributedString(string: ".\nИсходный код находится на ", attributes: [.paragraphStyle: paragraphStyle]))
+                    let githubLink = NSAttributedString(
+                        string: "GitHub",
+                        attributes: [.link: URL(string: "https://github.com/korenskoy/yamp-zvuk-com")!, .paragraphStyle: paragraphStyle]
+                    )
+                    credits.append(githubLink)
+                    credits.append(NSAttributedString(string: ".", attributes: [.paragraphStyle: paragraphStyle]))
                     NSApplication.shared.orderFrontStandardAboutPanel(options: [
                         .applicationName: "Звук [unofficial]",
                         .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0",
@@ -81,7 +90,11 @@ struct YAMPApp: App {
             CommandGroup(replacing: .toolbar) {}
             CommandGroup(replacing: .sidebar) {}
             CommandGroup(replacing: .windowArrangement) {}
-            CommandGroup(replacing: .help) {}
+            CommandGroup(replacing: .help) {
+                Button("GitHub") {
+                    NSWorkspace.shared.open(URL(string: "https://github.com/korenskoy/yamp-zvuk-com")!)
+                }
+            }
             CommandMenu("Воспроизведение") {
                 Button("Пауза / Играть") {
                     playerService.togglePlayPause()
