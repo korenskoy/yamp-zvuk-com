@@ -86,12 +86,19 @@ struct PlayerBarView: View {
                         .help("Радио по треку")
 
                         if lastFMService.isConnected && appSettings.isScrobblingEnabled {
-                            LastFMIcon()
-                                .fill(Color.primary)
-                                .frame(width: 12, height: 12)
-                                .opacity(lastFMService.scrobbleState == .scrobbled ? 1 : 0.2)
-                                .help(lastFMService.scrobbleState == .scrobbled ? "Заскробблено" : "Ожидание скробблинга")
-                                .animation(.easeInOut(duration: 0.3), value: lastFMService.scrobbleState == .scrobbled)
+                            Button {
+                                if let username = lastFMService.connectedUsername {
+                                    NSWorkspace.shared.open(URL(string: "https://www.last.fm/user/\(username)")!)
+                                }
+                            } label: {
+                                LastFMIcon()
+                                    .fill(lastFMService.scrobbleState == .scrobbled ? Color.red : Color.primary)
+                                    .frame(width: 12, height: 12)
+                                    .opacity(lastFMService.scrobbleState == .scrobbled ? 1 : 0.2)
+                            }
+                            .buttonStyle(.plain)
+                            .help(lastFMService.scrobbleState == .scrobbled ? "Заскробблено" : "Ожидание скробблинга")
+                            .animation(.easeInOut(duration: 0.3), value: lastFMService.scrobbleState == .scrobbled)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)

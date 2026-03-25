@@ -22,8 +22,15 @@ final class AppSettings {
     @AppStorage("volume") private var _volume: Double = 0.7
 
     var isScrobblingEnabled: Bool {
-        get { _scrobblingEnabled }
-        set { _scrobblingEnabled = newValue }
+        get {
+            access(keyPath: \.isScrobblingEnabled)
+            return _scrobblingEnabled
+        }
+        set {
+            withMutation(keyPath: \.isScrobblingEnabled) {
+                _scrobblingEnabled = newValue
+            }
+        }
     }
 
     @ObservationIgnored
