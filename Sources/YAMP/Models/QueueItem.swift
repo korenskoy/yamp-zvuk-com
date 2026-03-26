@@ -29,11 +29,11 @@ enum PlaybackContext: Hashable, Codable {
                 instrumental: instrumental,
                 popularity: popularity
             )
-            return tracks.compactMap { t in
-                guard !t.id.isEmpty else { return nil }
+            return tracks.compactMap { track in
+                guard !track.id.isEmpty else { return nil }
                 return SimpleTrack(
-                    id: t.id, title: t.title, duration: t.duration,
-                    explicit: t.explicit, artists: t.artists, release: t.release
+                    id: track.id, title: track.title, duration: track.duration,
+                    explicit: track.explicit, artists: track.artists, release: track.release
                 )
             }
         }

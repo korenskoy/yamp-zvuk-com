@@ -57,9 +57,9 @@ final class LogStore {
 
     private static let maxEntries = 500
     private let formatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss.SSS"
-        return f
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "HH:mm:ss.SSS"
+        return dateFormatter
     }()
 
     func attach(to client: ZvukClient?) {

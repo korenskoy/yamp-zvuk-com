@@ -113,27 +113,42 @@ struct ArtistView: View {
             }
             .padding(20)
         }
-        .sheet(item: $expandedReleases) { item in
-            GridSheet(title: item.title) {
-                ForEach(item.items) { release in
-                    ReleaseThumbnailView(release: release)
-                        .onTapGesture {
-                            expandedReleases = nil
-                            appState.selectedDestination = .release(id: release.id)
+        .modifier(ArtistSheetsModifier(
+            expandedReleases: $expandedReleases,
+            expandedArtists: $expandedArtists,
+            appState: appState
+        ))
+    }
+
+    private struct ArtistSheetsModifier: ViewModifier {
+        @Binding var expandedReleases: ExpandedItem<SimpleRelease>?
+        @Binding var expandedArtists: ExpandedItem<SimpleArtist>?
+        let appState: AppState
+
+        func body(content: Content) -> some View {
+            content
+                .sheet(item: $expandedReleases) { item in
+                    GridSheet(title: item.title) {
+                        ForEach(item.items) { release in
+                            ReleaseThumbnailView(release: release)
+                                .onTapGesture {
+                                    expandedReleases = nil
+                                    appState.selectedDestination = .release(id: release.id)
+                                }
                         }
+                    }
                 }
-            }
-        }
-        .sheet(item: $expandedArtists) { item in
-            GridSheet(title: item.title) {
-                ForEach(item.items) { artist in
-                    ArtistThumbnailView(artist: artist)
-                        .onTapGesture {
-                            expandedArtists = nil
-                            appState.selectedDestination = .artist(id: artist.id)
+                .sheet(item: $expandedArtists) { item in
+                    GridSheet(title: item.title) {
+                        ForEach(item.items) { artist in
+                            ArtistThumbnailView(artist: artist)
+                                .onTapGesture {
+                                    expandedArtists = nil
+                                    appState.selectedDestination = .artist(id: artist.id)
+                                }
                         }
+                    }
                 }
-            }
         }
     }
 

@@ -165,7 +165,11 @@ private struct LogRowView: View {
     private func apiBadge(_ source: LogStore.APISource) -> some View {
         Text(source.rawValue)
             .font(.system(.caption2, design: .monospaced))
-            .foregroundStyle(source == .lastfm ? Color(red: 0xBF/255, green: 0x30/255, blue: 0x21/255) : Color(red: 0x05/255, green: 0xDF/255, blue: 0x65/255))
+            .foregroundStyle(
+                source == .lastfm
+                    ? Color(red: 0xBF / 255, green: 0x30 / 255, blue: 0x21 / 255)
+                    : Color(red: 0x05 / 255, green: 0xDF / 255, blue: 0x65 / 255)
+            )
             .frame(width: 44, alignment: .trailing)
     }
 
@@ -293,7 +297,7 @@ private struct FastTextView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
-        let textView = scrollView.documentView as! NSTextView
+        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
         textView.isEditable = false
         textView.isSelectable = true
         textView.backgroundColor = .black
@@ -309,7 +313,7 @@ private struct FastTextView: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        let textView = scrollView.documentView as! NSTextView
+        guard let textView = scrollView.documentView as? NSTextView else { return }
         if textView.string != text {
             textView.string = text
         }

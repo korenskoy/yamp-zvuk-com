@@ -46,7 +46,11 @@ final class LastFMService {
             let start = Date()
             do {
                 let token = try await apiClient.getToken()
-                logStore?.appendLastFM(method: "POST", url: "last.fm/auth.getToken", statusCode: 200, duration: Date().timeIntervalSince(start), error: nil, requestBody: "{\"method\":\"auth.getToken\"}")
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/auth.getToken", statusCode: 200,
+                    duration: Date().timeIntervalSince(start), error: nil,
+                    requestBody: "{\"method\":\"auth.getToken\"}"
+                )
 
                 let authURL = "https://www.last.fm/api/auth/?api_key=\(LastFMCredentials.apiKey)&token=\(token)"
                 if let url = URL(string: authURL) {
@@ -60,14 +64,23 @@ final class LastFMService {
                     do {
                         let session = try await apiClient.getSession(token: token)
                         let body = "{\"method\":\"auth.getSession\",\"token\":\"\(token)\"}"
-                        logStore?.appendLastFM(method: "POST", url: "last.fm/auth.getSession", statusCode: 200, duration: Date().timeIntervalSince(sessionStart), error: nil, requestBody: body)
+                        logStore?.appendLastFM(
+                            method: "POST", url: "last.fm/auth.getSession", statusCode: 200,
+                            duration: Date().timeIntervalSince(sessionStart), error: nil,
+                            requestBody: body
+                        )
                         sessionKey = session.key
                         connectedUsername = session.name
                         connectionState = .connected
                         saveSession(key: session.key, username: session.name)
                         return
                     } catch {
-                        logStore?.appendLastFM(method: "POST", url: "last.fm/auth.getSession", statusCode: nil, duration: Date().timeIntervalSince(sessionStart), error: error.localizedDescription, requestBody: "{\"method\":\"auth.getSession\",\"token\":\"\(token)\"}")
+                        logStore?.appendLastFM(
+                            method: "POST", url: "last.fm/auth.getSession", statusCode: nil,
+                            duration: Date().timeIntervalSince(sessionStart),
+                            error: error.localizedDescription,
+                            requestBody: "{\"method\":\"auth.getSession\",\"token\":\"\(token)\"}"
+                        )
                         try await Task.sleep(for: .seconds(3))
                     }
                 }
@@ -107,10 +120,19 @@ final class LastFMService {
         Task {
             let start = Date()
             do {
-                try await apiClient.updateNowPlaying(artist: artist, track: title, album: album, duration: dur, sessionKey: key)
-                logStore?.appendLastFM(method: "POST", url: "last.fm/track.updateNowPlaying", statusCode: 200, duration: Date().timeIntervalSince(start), error: nil, requestBody: body)
+                try await apiClient.updateNowPlaying(
+                    artist: artist, track: title, album: album, duration: dur, sessionKey: key
+                )
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.updateNowPlaying", statusCode: 200,
+                    duration: Date().timeIntervalSince(start), error: nil, requestBody: body
+                )
             } catch {
-                logStore?.appendLastFM(method: "POST", url: "last.fm/track.updateNowPlaying", statusCode: nil, duration: Date().timeIntervalSince(start), error: error.localizedDescription, requestBody: body)
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.updateNowPlaying", statusCode: nil,
+                    duration: Date().timeIntervalSince(start),
+                    error: error.localizedDescription, requestBody: body
+                )
             }
         }
     }
@@ -145,13 +167,23 @@ final class LastFMService {
         Task {
             let start = Date()
             do {
-                let accepted = try await apiClient.scrobble(artist: artist, track: title, album: album, duration: dur, date: timestamp, sessionKey: key)
-                logStore?.appendLastFM(method: "POST", url: "last.fm/track.scrobble", statusCode: 200, duration: Date().timeIntervalSince(start), error: nil, requestBody: body)
+                let accepted = try await apiClient.scrobble(
+                    artist: artist, track: title, album: album,
+                    duration: dur, date: timestamp, sessionKey: key
+                )
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.scrobble", statusCode: 200,
+                    duration: Date().timeIntervalSince(start), error: nil, requestBody: body
+                )
                 if accepted > 0 {
                     scrobbleState = .scrobbled
                 }
             } catch {
-                logStore?.appendLastFM(method: "POST", url: "last.fm/track.scrobble", statusCode: nil, duration: Date().timeIntervalSince(start), error: error.localizedDescription, requestBody: body)
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.scrobble", statusCode: nil,
+                    duration: Date().timeIntervalSince(start),
+                    error: error.localizedDescription, requestBody: body
+                )
             }
         }
     }
@@ -168,9 +200,16 @@ final class LastFMService {
             let start = Date()
             do {
                 try await apiClient.loveTrack(artist: artist, track: title, sessionKey: key)
-                logStore?.appendLastFM(method: "POST", url: "last.fm/track.love", statusCode: 200, duration: Date().timeIntervalSince(start), error: nil, requestBody: body)
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.love", statusCode: 200,
+                    duration: Date().timeIntervalSince(start), error: nil, requestBody: body
+                )
             } catch {
-                logStore?.appendLastFM(method: "POST", url: "last.fm/track.love", statusCode: nil, duration: Date().timeIntervalSince(start), error: error.localizedDescription, requestBody: body)
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.love", statusCode: nil,
+                    duration: Date().timeIntervalSince(start),
+                    error: error.localizedDescription, requestBody: body
+                )
             }
         }
     }
@@ -185,9 +224,16 @@ final class LastFMService {
             let start = Date()
             do {
                 try await apiClient.unloveTrack(artist: artist, track: title, sessionKey: key)
-                logStore?.appendLastFM(method: "POST", url: "last.fm/track.unlove", statusCode: 200, duration: Date().timeIntervalSince(start), error: nil, requestBody: body)
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.unlove", statusCode: 200,
+                    duration: Date().timeIntervalSince(start), error: nil, requestBody: body
+                )
             } catch {
-                logStore?.appendLastFM(method: "POST", url: "last.fm/track.unlove", statusCode: nil, duration: Date().timeIntervalSince(start), error: error.localizedDescription, requestBody: body)
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.unlove", statusCode: nil,
+                    duration: Date().timeIntervalSince(start),
+                    error: error.localizedDescription, requestBody: body
+                )
             }
         }
     }

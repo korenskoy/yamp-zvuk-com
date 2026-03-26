@@ -55,9 +55,9 @@ struct CollectionView: View {
                                 release: track.release
                             )
                             TrackRowView(track: simple) {
-                                let simpleTracks = viewModel.likedTracks.map { t in
-                                    SimpleTrack(id: t.id, title: t.title, duration: t.duration,
-                                                explicit: t.explicit, artists: t.artists, release: t.release)
+                                let simpleTracks = viewModel.likedTracks.map { track in
+                                    SimpleTrack(id: track.id, title: track.title, duration: track.duration,
+                                                explicit: track.explicit, artists: track.artists, release: track.release)
                                 }
                                 let idx = viewModel.likedTracks.firstIndex(where: { $0.id == track.id }) ?? 0
                                 playerService.playQueue(simpleTracks, context: .liked, startAt: idx)

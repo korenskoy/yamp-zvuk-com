@@ -57,13 +57,11 @@ final class CollectionService {
 
         if wasLiked {
             likedTrackIDs.remove(id)
-            do { _ = try await client.unlikeTrack(id) }
-            catch { likedTrackIDs.insert(id); return }
+            do { _ = try await client.unlikeTrack(id) } catch { likedTrackIDs.insert(id); return }
             if settings?.isScrobblingEnabled == true { lastFM?.unloveTrack(track) }
         } else {
             likedTrackIDs.insert(id)
-            do { _ = try await client.likeTrack(id) }
-            catch { likedTrackIDs.remove(id); return }
+            do { _ = try await client.likeTrack(id) } catch { likedTrackIDs.remove(id); return }
             if settings?.isScrobblingEnabled == true { lastFM?.loveTrack(track) }
         }
         cache?.invalidateLikedTracks()
@@ -75,12 +73,10 @@ final class CollectionService {
         guard let client else { return }
         if likedArtistIDs.contains(id) {
             likedArtistIDs.remove(id)
-            do { _ = try await client.unlikeArtist(id) }
-            catch { likedArtistIDs.insert(id) }
+            do { _ = try await client.unlikeArtist(id) } catch { likedArtistIDs.insert(id) }
         } else {
             likedArtistIDs.insert(id)
-            do { _ = try await client.likeArtist(id) }
-            catch { likedArtistIDs.remove(id) }
+            do { _ = try await client.likeArtist(id) } catch { likedArtistIDs.remove(id) }
         }
     }
 
@@ -90,12 +86,10 @@ final class CollectionService {
         guard let client else { return }
         if likedPlaylistIDs.contains(id) {
             likedPlaylistIDs.remove(id)
-            do { _ = try await client.unlikePlaylist(id) }
-            catch { likedPlaylistIDs.insert(id) }
+            do { _ = try await client.unlikePlaylist(id) } catch { likedPlaylistIDs.insert(id) }
         } else {
             likedPlaylistIDs.insert(id)
-            do { _ = try await client.likePlaylist(id) }
-            catch { likedPlaylistIDs.remove(id) }
+            do { _ = try await client.likePlaylist(id) } catch { likedPlaylistIDs.remove(id) }
         }
         cache?.invalidateUserPlaylists()
         await loadCollection(client: client)
@@ -108,12 +102,10 @@ final class CollectionService {
         guard let client else { return }
         if likedReleaseIDs.contains(id) {
             likedReleaseIDs.remove(id)
-            do { _ = try await client.unlikeRelease(id) }
-            catch { likedReleaseIDs.insert(id) }
+            do { _ = try await client.unlikeRelease(id) } catch { likedReleaseIDs.insert(id) }
         } else {
             likedReleaseIDs.insert(id)
-            do { _ = try await client.likeRelease(id) }
-            catch { likedReleaseIDs.remove(id) }
+            do { _ = try await client.likeRelease(id) } catch { likedReleaseIDs.remove(id) }
         }
     }
 }

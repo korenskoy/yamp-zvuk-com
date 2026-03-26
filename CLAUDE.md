@@ -19,6 +19,12 @@ xcodegen generate
 
 # Build DMG (only on explicit user request!)
 ./scripts/build-dmg.sh
+
+# Lint
+./scripts/lint.sh
+
+# Lint with auto-fix
+./scripts/lint_fix.sh
 ```
 
 ## Architecture
@@ -115,6 +121,16 @@ private struct MyGlassModifier: ViewModifier {
     }
 }
 ```
+
+## Linting
+
+SwiftLint integrated via SPM Build Tool Plugin (`SwiftLintBuildToolPlugin`). Runs automatically on every build. Config: `.swiftlint.yml`.
+
+- **Pre-commit hook**: lints only staged `.swift` files, blocks commit on violations
+- **Scripts**: `scripts/lint.sh` (check), `scripts/lint_fix.sh` (auto-fix)
+- **Binary location**: `.build/artifacts/swiftlint/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint` (resolved via `swift package resolve`)
+- New code must pass SwiftLint with zero warnings before commit
+- Use `// swiftlint:disable:next rule_name` only for justified cases (e.g. SVG path data in Shape)
 
 ## Code Style and important notes
 

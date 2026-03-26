@@ -110,65 +110,7 @@ struct PlaylistView: View {
 
                 Spacer()
 
-                HStack(spacing: 12) {
-                    Button {
-                        if !playlist.tracks.isEmpty {
-                            playerService.playQueue(
-                                playlist.tracks,
-                                context: .playlist(id: playlist.id)
-                            )
-                        }
-                    } label: {
-                        Label("Воспроизвести", systemImage: "play.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(playlist.tracks.isEmpty)
-
-                    if !isOwnPlaylist(playlist) {
-                        Button {
-                            Task {
-                                await collectionService.togglePlaylistLike(playlist.id, client: appState.client)
-                            }
-                        } label: {
-                            Image(systemName: collectionService.isPlaylistLiked(playlist.id)
-                                  ? "checkmark" : "plus")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .help(collectionService.isPlaylistLiked(playlist.id)
-                              ? "Убрать из коллекции" : "Добавить в коллекцию")
-                    }
-
-                    if isOwnPlaylist(playlist) {
-                        Button {
-                            newName = playlist.title
-                            showRenameSheet = true
-                        } label: {
-                            Image(systemName: "pencil")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .help("Переименовать")
-
-                        Button {
-                            Task {
-                                let deleted = await viewModel.deletePlaylist(client: appState.client, cache: cacheService, collection: collectionService)
-                                if deleted {
-                                    appState.selectedDestination = .collection
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "trash")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .help("Удалить")
-                    }
-                }
+                playlistActions(playlist)
             }
 
             Spacer()
@@ -198,6 +140,70 @@ struct PlaylistView: View {
                     .font(.system(size: 36))
                     .foregroundStyle(.secondary)
             }
+    }
+
+    private func playlistActions(_ playlist: Playlist) -> some View {
+        HStack(spacing: 12) {
+            Button {
+                if !playlist.tracks.isEmpty {
+                    playerService.playQueue(
+                        playlist.tracks,
+                        context: .playlist(id: playlist.id)
+                    )
+                }
+            } label: {
+                Label("Воспроизвести", systemImage: "play.fill")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(playlist.tracks.isEmpty)
+
+            if !isOwnPlaylist(playlist) {
+                Button {
+                    Task {
+                        await collectionService.togglePlaylistLike(playlist.id, client: appState.client)
+                    }
+                } label: {
+                    Image(systemName: collectionService.isPlaylistLiked(playlist.id)
+                          ? "checkmark" : "plus")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help(collectionService.isPlaylistLiked(playlist.id)
+                      ? "Убрать из коллекции" : "Добавить в коллекцию")
+            }
+
+            if isOwnPlaylist(playlist) {
+                Button {
+                    newName = playlist.title
+                    showRenameSheet = true
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Переименовать")
+
+                Button {
+                    Task {
+                        let deleted = await viewModel.deletePlaylist(
+                            client: appState.client, cache: cacheService, collection: collectionService
+                        )
+                        if deleted {
+                            appState.selectedDestination = .collection
+                        }
+                    }
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Удалить")
+            }
+        }
     }
 
     private func isOwnPlaylist(_ playlist: Playlist) -> Bool {

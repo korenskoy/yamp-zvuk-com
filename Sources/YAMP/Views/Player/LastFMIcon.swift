@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LastFMIcon: Shape {
+    // swiftlint:disable:next function_body_length
     func path(in rect: CGRect) -> Path {
         let w = rect.width
         let h = rect.height

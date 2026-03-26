@@ -39,14 +39,14 @@ final class SearchViewModel {
     private var fullSearchLoaded = false
 
     var autocompleteSuggestion: String? {
-        let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard q.count >= 2 else { return nil }
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard trimmedQuery.count >= 2 else { return nil }
         let candidates: [String] =
             topArtists.map(\.title) +
             topReleases.map(\.title) +
             topPlaylists.map(\.title) +
             topTracks.map(\.title)
-        return candidates.first { $0.lowercased().hasPrefix(q) && $0.lowercased() != q }
+        return candidates.first { $0.lowercased().hasPrefix(trimmedQuery) && $0.lowercased() != trimmedQuery }
     }
 
     var isEmpty: Bool {
@@ -119,13 +119,13 @@ final class SearchViewModel {
         guard let client, !fullSearchLoaded else { return }
         categoryTask?.cancel()
 
-        let q = lastQuery
+        let searchQuery = lastQuery
         categoryTask = Task {
             isLoading = true
             defer { isLoading = false }
 
             do {
-                let result = try await client.search(q, limit: 30)
+                let result = try await client.search(searchQuery, limit: 30)
                 guard !Task.isCancelled else { return }
 
                 tracks = result.tracks?.items ?? []

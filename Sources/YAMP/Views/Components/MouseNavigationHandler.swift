@@ -23,7 +23,7 @@ struct MouseNavigationHandler: NSViewRepresentable {
         var onBack: (() -> Void)?
         var onForward: (() -> Void)?
 
-        private nonisolated(unsafe) var monitor: Any?
+        nonisolated(unsafe) private var monitor: Any?
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
