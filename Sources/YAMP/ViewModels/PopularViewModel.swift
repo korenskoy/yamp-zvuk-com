@@ -53,8 +53,10 @@ final class PopularViewModel {
 
         var loadedSections: [PopularSectionData] = []
 
-        for (index, section) in grid.sections.enumerated() where section.enabled {
-            let sectionId = section.uuid.isEmpty ? "\(index)" : section.uuid
+        let enabledSections = grid.sections.filter(\.enabled)
+
+        for (index, section) in enabledSections.enumerated() {
+            let sectionId = "\(index)"
             do {
                 switch section.type {
                 case "listing":
@@ -71,7 +73,8 @@ final class PopularViewModel {
                     break
                 }
             } catch {
-                // Сетевые ошибки уже логируются через LogStore hook клиента
+                // Сетевые ошибки логируются транспортным слоем клиента в LogStore
+                continue
             }
         }
 
