@@ -52,6 +52,7 @@ final class CacheService {
     private var editorialPlaylistIDs: CacheEntry<[String]>?
     private var hiddenCollection: CacheEntry<HiddenCollection>?
     private var recommendations: CacheEntry<DynamicBlock>?
+    private var grids: [String: CacheEntry<GridPage>] = [:]
 
     func configure(appState: AppState) {
         self.appState = appState
@@ -284,6 +285,18 @@ final class CacheService {
         }
     }
 
+    // MARK: - Grids
+
+    func getGrid(name: String) async throws -> GridPage {
+        if let entry = grids[name], !entry.isExpired {
+            return entry.value
+        }
+        guard let client else { return GridPage() }
+        let grid = try await client.getGrid(name: name)
+        grids[name] = CacheEntry(value: grid, insertedAt: Date(), ttl: TTL.stableEntity)
+        return grid
+    }
+
     // MARK: - Liked Tracks (query result)
 
     func getLikedTracks(orderBy: OrderBy = .dateAdded, direction: OrderDirection = .desc) async throws -> [Track] {
@@ -381,6 +394,7 @@ final class CacheService {
         editorialPlaylistIDs = nil
         recommendations = nil
         hiddenCollection = nil
+        grids.removeAll()
     }
 
     // MARK: - Eviction

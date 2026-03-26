@@ -106,7 +106,6 @@ struct CoverSheetView: View {
         .onTapGesture {
             dismiss()
         }
-        .keyboardShortcut(.escape, modifiers: [])
     }
 
     private var placeholder: some View {

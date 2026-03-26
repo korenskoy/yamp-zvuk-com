@@ -2,6 +2,7 @@ import Foundation
 
 enum NavigationDestination: Hashable, Codable {
     case home
+    case popular
     case search
     case news
     case collection

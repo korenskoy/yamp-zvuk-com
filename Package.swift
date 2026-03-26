@@ -8,7 +8,7 @@ let package = Package(
         .macOS(.v15),
     ],
     dependencies: [
-        .package(url: "https://github.com/korenskoy/zvuk-swift.git", from: "0.1.0"),
+        .package(url: "https://github.com/korenskoy/zvuk-swift.git", from: "0.2.0"),
         .package(url: "https://github.com/duhnnie/LastFM.swift", from: "1.6.1"),
     ],
     targets: [

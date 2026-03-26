@@ -11,33 +11,35 @@ struct HomeView: View {
     private let spacing: CGFloat = 16
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                Text("Главная")
-                    .font(.largeTitle.bold())
-                    .padding(.horizontal)
-
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, minHeight: 200)
-                } else {
-                    if !viewModel.recommendationItems.isEmpty {
-                        recommendationsSection
-                    }
-
-                    if !viewModel.editorialPlaylists.isEmpty {
-                        editorialSection
-                    }
-
-                    if let error = viewModel.errorMessage {
-                        Text(error)
-                            .foregroundStyle(.red)
-                            .font(.callout)
+        Group {
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        Text("Главная")
+                            .font(.largeTitle.bold())
                             .padding(.horizontal)
+
+                        if !viewModel.recommendationItems.isEmpty {
+                            recommendationsSection
+                        }
+
+                        if !viewModel.editorialPlaylists.isEmpty {
+                            editorialSection
+                        }
+
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundStyle(.red)
+                                .font(.callout)
+                                .padding(.horizontal)
+                        }
                     }
+                    .padding(.vertical)
                 }
             }
-            .padding(.vertical)
         }
         .task {
             await viewModel.load(cache: cacheService)

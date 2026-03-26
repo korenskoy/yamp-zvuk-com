@@ -7,44 +7,48 @@ struct BlacklistView: View {
     @State private var viewModel = BlacklistViewModel()
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Чёрный список")
-                    .font(.largeTitle.bold())
-                    .padding(.horizontal)
+        Group {
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Чёрный список")
+                            .font(.largeTitle.bold())
+                            .padding(.horizontal)
 
-                Text("Скрытые артисты и треки")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
+                        Text("Скрытые артисты и треки")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal)
 
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, minHeight: 200)
-                } else if viewModel.artists.isEmpty && viewModel.tracks.isEmpty {
-                    ContentUnavailableView(
-                        "Пусто",
-                        systemImage: "hand.thumbsdown",
-                        description: Text("Вы пока никого не заблокировали")
-                    )
-                    .frame(maxWidth: .infinity, minHeight: 300)
-                } else {
-                    if !viewModel.artists.isEmpty {
-                        artistsSection
+                        if viewModel.artists.isEmpty && viewModel.tracks.isEmpty {
+                            ContentUnavailableView(
+                                "Пусто",
+                                systemImage: "hand.thumbsdown",
+                                description: Text("Вы пока никого не заблокировали")
+                            )
+                            .frame(maxWidth: .infinity, minHeight: 300)
+                        } else {
+                            if !viewModel.artists.isEmpty {
+                                artistsSection
+                            }
+                            if !viewModel.tracks.isEmpty {
+                                tracksSection
+                            }
+                        }
+
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundStyle(.red)
+                                .font(.callout)
+                                .padding(.horizontal)
+                        }
                     }
-                    if !viewModel.tracks.isEmpty {
-                        tracksSection
-                    }
-                }
-
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .font(.callout)
-                        .padding(.horizontal)
+                    .padding(.vertical)
                 }
             }
-            .padding(.vertical)
         }
         .task {
             await viewModel.load(client: appState.client, cache: cacheService)

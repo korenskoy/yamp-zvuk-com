@@ -1,5 +1,5 @@
 {
-  "originHash" : "0ae998e0e441c592d9ee9efcfbef1f0e957aa9aade9f2e371540fcf5dae5122c",
+  "originHash" : "39ff089df15f45688d290a8339b3ee701ef5526e401220317c7d8bee037bbe79",
   "pins" : [
     {
       "identity" : "lastfm.swift",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/korenskoy/zvuk-swift.git",
       "state" : {
-        "revision" : "b32b0f19e4f616ca0b846c794d005a1520989eda",
-        "version" : "0.1.1"
+        "revision" : "f752b446d7175d8c2d7d673fd4913f112b23fd3c",
+        "version" : "0.2.0"
       }
     }
   ],

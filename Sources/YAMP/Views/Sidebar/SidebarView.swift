@@ -26,6 +26,9 @@ struct SidebarView: View {
                 Label("Главная", systemImage: "music.note")
                     .tag(NavigationDestination.home)
 
+                Label("Популярное", systemImage: "flame")
+                    .tag(NavigationDestination.popular)
+
                 Label("Поиск", systemImage: "magnifyingglass")
                     .tag(NavigationDestination.search)
 

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0924FAD59F5A42EB28FE775E /* ProgressBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CF2F2F0C8878B646870D8F3 /* ProgressBarView.swift */; };
+		19388591F7856307D261DF31 /* PopularViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14872D27CC2369B1C92843C5 /* PopularViewModel.swift */; };
 		1E6417F485646391C9D692BD /* LogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC865906B2B020FDFA5AEC0D /* LogStore.swift */; };
 		1E683522C0A15E1D1852D958 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F69E1EC6D352BEC3A66B5E /* SearchViewModel.swift */; };
 		22E6701E04D9200DFCBAEA5F /* ArtistHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26A48261B8B39E9D46679D34 /* ArtistHeaderView.swift */; };
@@ -58,6 +59,7 @@
 		A65F27F6E9C96D1E151A7CC0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0DBDB6523A6C78DB0CE18708 /* Assets.xcassets */; };
 		A83966AA4E6F7AE851C0E0F8 /* ReleaseHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32E9BF5C50CBA306C3DDEEB3 /* ReleaseHeaderView.swift */; };
 		AFC035DF3CF660CFA978CD0F /* CollectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C812FBCA52C160393A061AC7 /* CollectionService.swift */; };
+		B0B82C0E4346F5CA229C2F7C /* PopularView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E3AF907DF64AABA9570D89 /* PopularView.swift */; };
 		B59359A6DCADFFDD5F146297 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF92A9D6DD0DDA99A5415F7 /* HomeViewModel.swift */; };
 		B7FD54E63932FE1D07CDB5CD /* PlayerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C6C1F98E1052E56C92F371 /* PlayerService.swift */; };
 		BE323AAE1F49BBD2AD4A4666 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1319691BAA854CAADDD955 /* AuthViewModel.swift */; };
@@ -87,6 +89,7 @@
 		0DBDB6523A6C78DB0CE18708 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1305FEEB8C840A626DB44C83 /* PlayerBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerBarView.swift; sourceTree = "<group>"; };
 		13F0C52FA9C2B68BD1C590F1 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
+		14872D27CC2369B1C92843C5 /* PopularViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopularViewModel.swift; sourceTree = "<group>"; };
 		16D5A9F053C117182322E985 /* RecommendedPlaylistCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendedPlaylistCardView.swift; sourceTree = "<group>"; };
 		17B3368D367E2D7AF9CE5E19 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		1FC8BAB9EB06A8A5A45D7897 /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
@@ -123,6 +126,7 @@
 		841FBDF67265E80438F3A915 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		86C6C1F98E1052E56C92F371 /* PlayerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerService.swift; sourceTree = "<group>"; };
 		882CC147A4A1534622402AAD /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
+		89E3AF907DF64AABA9570D89 /* PopularView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopularView.swift; sourceTree = "<group>"; };
 		8BF10EB26FB58FFA4F7D73D8 /* WaveXYPadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveXYPadView.swift; sourceTree = "<group>"; };
 		8FAD0D0E7E9F954819D1F407 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		95085CC6F1D017B0451B89FF /* BlacklistViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlacklistViewModel.swift; sourceTree = "<group>"; };
@@ -340,6 +344,7 @@
 				13F0C52FA9C2B68BD1C590F1 /* PlayerViewModel.swift */,
 				58A7E1D94EA12A43C5D068E0 /* PlaylistsViewModel.swift */,
 				78790803623E8810A88D9E4C /* PlaylistViewModel.swift */,
+				14872D27CC2369B1C92843C5 /* PopularViewModel.swift */,
 				9DD26E992F22D45BF7020D9E /* ReleaseViewModel.swift */,
 				75F69E1EC6D352BEC3A66B5E /* SearchViewModel.swift */,
 				D934AD3C1F9ED296F814F70A /* SidebarViewModel.swift */,
@@ -354,6 +359,14 @@
 				F2C60BFF30937DE7F75C9FD3 /* CollectionView.swift */,
 			);
 			path = Collection;
+			sourceTree = "<group>";
+		};
+		C30659A5EED9161724EED489 /* Popular */ = {
+			isa = PBXGroup;
+			children = (
+				89E3AF907DF64AABA9570D89 /* PopularView.swift */,
+			);
+			path = Popular;
 			sourceTree = "<group>";
 		};
 		D84C01C25FFD4E1CC6553A1E /* Settings */ = {
@@ -424,6 +437,7 @@
 				8D2E723F74097E2A1DF5CF4E /* News */,
 				53BB099B7F67E34EBD8AA8DB /* Player */,
 				B16FAEDACFC09B2D038D2383 /* Playlists */,
+				C30659A5EED9161724EED489 /* Popular */,
 				ECC8AA486366AE9F7721C710 /* Release */,
 				064241DF212884D81F2E033C /* Search */,
 				D84C01C25FFD4E1CC6553A1E /* Settings */,
@@ -565,6 +579,8 @@
 				5530851F48BDCABA0ADCEE03 /* PlaylistView.swift in Sources */,
 				8E6A7D459018BF4B00D1FBFA /* PlaylistViewModel.swift in Sources */,
 				A5D86313D9DA8AF2AE603CD1 /* PlaylistsViewModel.swift in Sources */,
+				B0B82C0E4346F5CA229C2F7C /* PopularView.swift in Sources */,
+				19388591F7856307D261DF31 /* PopularViewModel.swift in Sources */,
 				0924FAD59F5A42EB28FE775E /* ProgressBarView.swift in Sources */,
 				E8EEF1B0B8853437BBFC180F /* QueueItem.swift in Sources */,
 				3B2B6EA6F96789BD7E463D4C /* QueueView.swift in Sources */,
@@ -792,7 +808,7 @@
 			repositoryURL = "https://github.com/korenskoy/zvuk-swift.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.1;
+				minimumVersion = 0.2.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

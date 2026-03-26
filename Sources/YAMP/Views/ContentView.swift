@@ -73,6 +73,8 @@ struct ContentView: View {
         switch appState.selectedDestination {
         case .home:
             HomeView()
+        case .popular:
+            PopularView()
         case .search:
             SearchView(viewModel: searchViewModel)
         case .news:
