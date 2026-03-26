@@ -9,7 +9,7 @@ This file provides guidance to Claude Code when working with the yamp-zvuk codeb
 - **Platform**: macOS 15+, Swift 6
 - **UI Framework**: SwiftUI with `@Observable` pattern
 - **Bundle ID**: `ru.korenskoy.zvuk-unofficial`
-- **API**: GraphQL via `ZvukMusic` Swift package (`../zvuk-swift`)
+- **API**: GraphQL + REST via `ZvukMusic` Swift package (`../zvuk-swift`, v0.2.0+)
 
 ## Build Commands
 
@@ -32,9 +32,10 @@ xcodegen generate
 ### Key Patterns
 
 - **DI via `@Environment`**: Services injected as `@Environment(PlayerService.self)`
-- **Navigation**: `AppState.selectedDestination` enum, history stack for back/forward
+- **Navigation**: `AppState.selectedDestination` enum (home, popular, search, collection, history, wave, artist, release, playlist, etc.), history stack for back/forward
 - **Search**: `.searchable(placement: .toolbar)` on ContentView's detail, `SearchViewModel` owned by ContentView and passed to SearchView
-- **Caching**: API responses via `CacheService`, images via `ImageCacheService` (file-based, 7-day TTL)
+- **Caching**: API responses via `CacheService` (grids, playlists, releases, artists), images via `ImageCacheService` (file-based, 7-day TTL)
+- **Grid API**: `CacheService.getGrid(name:)` loads CMS-managed page structure (sections with playlists, releases, artists). `PopularViewModel` parses grid sections and loads data per type. Sections listed in `ignoredGridSections` are skipped. Per-section error handling — one failing section doesn't break the page
 - **Image loading**: `CachedAsyncImage` — drop-in replacement for `AsyncImage`, always use it
 - **Generated covers**: `GeneratedCoverView(seed:)` — deterministic `MeshGradient` for items without artwork (e.g. recommendation playlists)
 
@@ -119,6 +120,7 @@ private struct MyGlassModifier: ViewModifier {
 
 - **Language**: Russian for UI strings, English for code. Use "Альбомы" (not "Релизы") in UI
 - **SwiftUI color**: Use `Color.accentColor` (not `.accent`) with `.foregroundStyle()`
+- **ProgressView centering**: Full-page spinners must be outside `ScrollView` (wrapped in `Group`), not inside — `ScrollView` doesn't expand to fill available height
 - **No DMG auto-build**: Only build DMG when explicitly requested
 - **Do not forget about CacheService**
 - **All requests to API must be logged** (look at LogStore) — never use empty `catch {}`, always surface or log errors
