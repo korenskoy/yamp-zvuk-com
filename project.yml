@@ -27,8 +27,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ru.korenskoy.zvuk-unofficial
         PRODUCT_NAME: YAMP
-        MARKETING_VERSION: "1.2.0"
-        CURRENT_PROJECT_VERSION: "82"
+        MARKETING_VERSION: "1.2.1"
+        CURRENT_PROJECT_VERSION: "86"
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "15.0"
         INFOPLIST_FILE: Info.plist
