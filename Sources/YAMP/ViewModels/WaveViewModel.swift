@@ -20,7 +20,8 @@ final class WaveViewModel {
 
     // State
     var isLoading = false
-    var error: String?
+    var appError: AppError?
+    var statusMessage: String?
 
     init() {
         restoreFilters()
@@ -45,7 +46,8 @@ final class WaveViewModel {
     func launchWave(client: ZvukClient?, playerService: PlayerService) async {
         guard let client else { return }
         isLoading = true
-        error = nil
+        appError = nil
+        statusMessage = nil
         defer { isLoading = false }
 
         do {
@@ -59,12 +61,12 @@ final class WaveViewModel {
             )
             let simple = try await params.fetchTracks(client: client)
             guard !simple.isEmpty else {
-                error = "Треки не найдены"
+                statusMessage = "Треки не найдены"
                 return
             }
             playerService.playQueue(simple, context: .wave(params: params))
         } catch {
-            self.error = String(describing: error)
+            self.appError = AppError.from(error)
         }
     }
 

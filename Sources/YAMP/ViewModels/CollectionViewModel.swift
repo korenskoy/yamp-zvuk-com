@@ -15,11 +15,11 @@ final class CollectionViewModel {
     var likedArtists: [Artist] = []
     var likedReleases: [Release] = []
     var isLoading = false
-    var error: String?
+    var appError: AppError?
 
     func load(cache: CacheService, collectionService: CollectionService) async {
         isLoading = true
-        error = nil
+        appError = nil
         defer { isLoading = false }
 
         var waited = 0
@@ -43,7 +43,7 @@ final class CollectionViewModel {
                 likedReleases = try await cache.getReleases(ids)
             }
         } catch {
-            self.error = String(describing: error)
+            self.appError = AppError.from(error)
         }
     }
 }

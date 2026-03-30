@@ -7,7 +7,7 @@ final class PlaylistViewModel {
     let playlistId: String
     var playlist: Playlist?
     var isLoading = false
-    var error: String?
+    var appError: AppError?
 
     init(playlistId: String) {
         self.playlistId = playlistId
@@ -15,13 +15,13 @@ final class PlaylistViewModel {
 
     func load(cache: CacheService) async {
         isLoading = true
-        error = nil
+        appError = nil
         defer { isLoading = false }
 
         do {
             playlist = try await cache.getPlaylist(playlistId)
         } catch {
-            self.error = String(describing: error)
+            self.appError = AppError.from(error)
         }
     }
 
@@ -36,6 +36,7 @@ final class PlaylistViewModel {
             }
             return result
         } catch {
+            self.appError = AppError.from(error)
             return false
         }
     }
@@ -52,6 +53,7 @@ final class PlaylistViewModel {
             }
             return result
         } catch {
+            self.appError = AppError.from(error)
             return false
         }
     }

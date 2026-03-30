@@ -21,17 +21,17 @@ struct PlaylistView: View {
         ZStack {
             if viewModel.isLoading {
                 ProgressView()
-            } else if let error = viewModel.error {
-                ContentUnavailableView(
-                    "Ошибка загрузки",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text(error)
-                )
             } else if let playlist = viewModel.playlist {
                 playlistContent(playlist)
+            } else {
+                ContentUnavailableView(
+                    "Не удалось загрузить",
+                    systemImage: "exclamationmark.triangle"
+                )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .errorAlert($viewModel.appError)
         .task(id: playlistId) {
             viewModel = PlaylistViewModel(playlistId: playlistId)
             await viewModel.load(cache: cacheService)

@@ -15,7 +15,6 @@ struct SidebarView: View {
     @Environment(AppState.self) private var appState
     @Environment(CacheService.self) private var cacheService
     @Environment(CollectionService.self) private var collectionService
-    @State private var viewModel = SidebarViewModel()
     @State private var playlistsVM = PlaylistsViewModel()
 
     var body: some View {
@@ -46,6 +45,10 @@ struct SidebarView: View {
                 if playlistsVM.isLoading {
                     ProgressView()
                         .controlSize(.small)
+                } else if playlistsVM.appError != nil {
+                    Text("Не удалось загрузить")
+                        .foregroundStyle(.secondary)
+                        .font(.callout)
                 } else if playlistsVM.playlists.isEmpty {
                     Text("Нет плейлистов")
                         .foregroundStyle(.secondary)

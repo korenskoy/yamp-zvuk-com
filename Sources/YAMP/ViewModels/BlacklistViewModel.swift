@@ -7,12 +7,12 @@ final class BlacklistViewModel {
     var artists: [Artist] = []
     var tracks: [Track] = []
     var isLoading = false
-    var errorMessage: String?
+    var appError: AppError?
 
     func load(client: ZvukClient?, cache: CacheService) async {
         guard client != nil else { return }
         isLoading = true
-        errorMessage = nil
+        appError = nil
         defer { isLoading = false }
 
         do {
@@ -28,7 +28,7 @@ final class BlacklistViewModel {
                 tracks = try await cache.getTracks(trackIDs)
             }
         } catch {
-            errorMessage = "Ошибка загрузки: \(error.localizedDescription)"
+            self.appError = AppError.from(error)
         }
     }
 
@@ -39,7 +39,7 @@ final class BlacklistViewModel {
             artists.removeAll { $0.id == id }
             cache.invalidateHiddenCollection()
         } catch {
-            errorMessage = "Не удалось убрать: \(error.localizedDescription)"
+            self.appError = AppError.from(error)
         }
     }
 
@@ -50,7 +50,7 @@ final class BlacklistViewModel {
             tracks.removeAll { $0.id == id }
             cache.invalidateHiddenCollection()
         } catch {
-            errorMessage = "Не удалось убрать: \(error.localizedDescription)"
+            self.appError = AppError.from(error)
         }
     }
 }

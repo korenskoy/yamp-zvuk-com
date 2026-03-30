@@ -29,6 +29,7 @@ struct CollectionView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .errorAlert($viewModel.appError)
         .task(id: viewModel.selectedTab) {
             await viewModel.load(cache: cacheService, collectionService: collectionService)
         }

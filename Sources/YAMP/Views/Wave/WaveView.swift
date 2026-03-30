@@ -73,16 +73,17 @@ struct WaveView: View {
                     .disabled(viewModel.isLoading)
                 }
 
-                if let error = viewModel.error {
-                    Text(error)
+                if let statusMessage = viewModel.statusMessage {
+                    Text(statusMessage)
                         .font(.callout)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding(20)
         }
         .frame(maxWidth: 600)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .errorAlert($viewModel.appError)
         .sheet(isPresented: $showGenreSheet) {
             WaveGenreSheet(
                 selectedGenres: $viewModel.selectedGenres,

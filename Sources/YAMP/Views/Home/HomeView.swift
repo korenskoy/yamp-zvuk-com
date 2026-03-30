@@ -29,18 +29,12 @@ struct HomeView: View {
                         if !viewModel.editorialPlaylists.isEmpty {
                             editorialSection
                         }
-
-                        if let error = viewModel.errorMessage {
-                            Text(error)
-                                .foregroundStyle(.red)
-                                .font(.callout)
-                                .padding(.horizontal)
-                        }
                     }
                     .padding(.vertical)
                 }
             }
         }
+        .errorAlert($viewModel.appError)
         .task {
             await viewModel.load(cache: cacheService)
         }

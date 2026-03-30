@@ -58,8 +58,8 @@ struct AuthView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(viewModel.isLoading || viewModel.token.isEmpty)
 
-                if let error = viewModel.errorMessage {
-                    Text(error)
+                if let message = viewModel.validationMessage {
+                    Text(message)
                         .font(.callout)
                         .foregroundStyle(.red)
                         .frame(maxWidth: 400)
@@ -70,5 +70,6 @@ struct AuthView: View {
         }
         .padding(40)
         .frame(minWidth: 500, minHeight: 400)
+        .errorAlert($viewModel.appError)
     }
 }

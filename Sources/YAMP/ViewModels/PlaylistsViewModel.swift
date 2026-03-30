@@ -6,11 +6,11 @@ import ZvukMusic
 final class PlaylistsViewModel {
     var playlists: [SimplePlaylist] = []
     var isLoading = false
-    var error: String?
+    var appError: AppError?
 
     func load(cache: CacheService) async {
         isLoading = true
-        error = nil
+        appError = nil
         defer { isLoading = false }
 
         do {
@@ -18,7 +18,7 @@ final class PlaylistsViewModel {
             guard !ids.isEmpty else { playlists = []; return }
             playlists = try await cache.getSimplePlaylists(ids)
         } catch {
-            self.error = String(describing: error)
+            self.appError = AppError.from(error)
         }
     }
 
@@ -27,7 +27,7 @@ final class PlaylistsViewModel {
         do {
             _ = try await client.deletePlaylist(id)
         } catch {
-            self.error = String(describing: error)
+            self.appError = AppError.from(error)
             return
         }
         cache.invalidatePlaylist(id)

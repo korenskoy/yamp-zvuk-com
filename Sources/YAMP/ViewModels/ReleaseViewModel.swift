@@ -7,7 +7,7 @@ final class ReleaseViewModel {
     let releaseId: String
     var release: Release?
     var isLoading = false
-    var error: String?
+    var appError: AppError?
 
     init(releaseId: String) {
         self.releaseId = releaseId
@@ -15,13 +15,13 @@ final class ReleaseViewModel {
 
     func load(cache: CacheService) async {
         isLoading = true
-        error = nil
+        appError = nil
         defer { isLoading = false }
 
         do {
             release = try await cache.getRelease(releaseId)
         } catch {
-            self.error = String(describing: error)
+            self.appError = AppError.from(error)
         }
     }
 }

@@ -36,18 +36,18 @@ enum PopularSectionData: Identifiable {
 final class PopularViewModel {
     var sections: [PopularSectionData] = []
     var isLoading = false
-    var errorMessage: String?
+    var appError: AppError?
 
     func load(cache: CacheService) async {
         isLoading = true
-        errorMessage = nil
+        appError = nil
         defer { isLoading = false }
 
         let grid: GridPage
         do {
             grid = try await cache.getGrid(name: GridName.popularMusic)
         } catch {
-            errorMessage = "Ошибка загрузки: \(error.localizedDescription)"
+            self.appError = AppError.from(error)
             return
         }
 

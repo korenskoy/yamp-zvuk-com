@@ -7,11 +7,11 @@ final class HomeViewModel {
     var recommendationItems: [RecommendationItem] = []
     var editorialPlaylists: [SimplePlaylist] = []
     var isLoading = false
-    var errorMessage: String?
+    var appError: AppError?
 
     func load(cache: CacheService) async {
         isLoading = true
-        errorMessage = nil
+        appError = nil
         defer { isLoading = false }
 
         do {
@@ -26,7 +26,7 @@ final class HomeViewModel {
                 editorialPlaylists = try await cache.getSimplePlaylists(ids)
             }
         } catch {
-            errorMessage = "Ошибка загрузки: \(error.localizedDescription)"
+            self.appError = AppError.from(error)
         }
     }
 }

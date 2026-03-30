@@ -26,17 +26,17 @@ struct ArtistView: View {
         ZStack {
             if viewModel.isLoading {
                 ProgressView()
-            } else if let error = viewModel.error {
-                ContentUnavailableView(
-                    "Ошибка загрузки",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text(error)
-                )
             } else if let artist = viewModel.artist {
                 artistContent(artist)
+            } else {
+                ContentUnavailableView(
+                    "Не удалось загрузить",
+                    systemImage: "exclamationmark.triangle"
+                )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .errorAlert($viewModel.appError)
         .task(id: artistId) {
             viewModel = ArtistViewModel(artistId: artistId)
             await viewModel.load(cache: cacheService)
@@ -67,16 +67,21 @@ struct ArtistView: View {
                     onRadio: {
                         Task {
                             guard let client = appState.client else { return }
-                            let result = try? await client.getRadioByArtist(artist.id)
-                            if let tracks = result?.tracks, !tracks.isEmpty {
-                                let simple = tracks.map {
-                                    SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
-                                                explicit: $0.explicit, artists: $0.artists, release: $0.release)
+                            do {
+                                let result = try await client.getRadioByArtist(artist.id)
+                                let tracks = result.tracks
+                                if !tracks.isEmpty {
+                                    let simple = tracks.map {
+                                        SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
+                                                    explicit: $0.explicit, artists: $0.artists, release: $0.release)
+                                    }
+                                    playerService.playQueue(
+                                        simple,
+                                        context: .radioArtist(id: artist.id)
+                                    )
                                 }
-                                playerService.playQueue(
-                                    simple,
-                                    context: .radioArtist(id: artist.id)
-                                )
+                            } catch {
+                                viewModel.appError = AppError.from(error)
                             }
                         }
                     },
@@ -87,7 +92,11 @@ struct ArtistView: View {
                     },
                     onHideArtist: {
                         Task {
-                            _ = try? await appState.client?.addToHidden(artist.id, type: .artist)
+                            do {
+                                _ = try await appState.client?.addToHidden(artist.id, type: .artist)
+                            } catch {
+                                viewModel.appError = AppError.from(error)
+                            }
                         }
                     }
                 )

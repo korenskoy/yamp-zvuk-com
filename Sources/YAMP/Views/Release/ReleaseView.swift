@@ -19,17 +19,17 @@ struct ReleaseView: View {
         ZStack {
             if viewModel.isLoading {
                 ProgressView()
-            } else if let error = viewModel.error {
-                ContentUnavailableView(
-                    "Ошибка загрузки",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text(error)
-                )
             } else if let release = viewModel.release {
                 releaseContent(release)
+            } else {
+                ContentUnavailableView(
+                    "Не удалось загрузить",
+                    systemImage: "exclamationmark.triangle"
+                )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .errorAlert($viewModel.appError)
         .task(id: releaseId) {
             viewModel = ReleaseViewModel(releaseId: releaseId)
             await viewModel.load(cache: cacheService)

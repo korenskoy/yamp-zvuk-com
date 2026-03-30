@@ -7,7 +7,7 @@ final class ArtistViewModel {
     let artistId: String
     var artist: Artist?
     var isLoading = false
-    var error: String?
+    var appError: AppError?
 
     var subscriberCount: Int? {
         artist?.collectionItemData?.likesCount
@@ -19,7 +19,7 @@ final class ArtistViewModel {
 
     func load(cache: CacheService) async {
         isLoading = true
-        error = nil
+        appError = nil
         defer { isLoading = false }
 
         do {
@@ -31,7 +31,7 @@ final class ArtistViewModel {
                 withDescription: true
             )
         } catch {
-            self.error = String(describing: error)
+            self.appError = AppError.from(error)
         }
     }
 }

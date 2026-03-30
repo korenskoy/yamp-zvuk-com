@@ -43,18 +43,12 @@ struct PopularView: View {
                         ForEach(viewModel.sections) { section in
                             sectionView(section)
                         }
-
-                        if let error = viewModel.errorMessage {
-                            Text(error)
-                                .foregroundStyle(.red)
-                                .font(.callout)
-                                .padding(.horizontal)
-                        }
                     }
                     .padding(.vertical)
                 }
             }
         }
+        .errorAlert($viewModel.appError)
         .task {
             await viewModel.load(cache: cacheService)
         }

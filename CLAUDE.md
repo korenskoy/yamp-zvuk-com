@@ -145,3 +145,12 @@ SwiftLint integrated via SPM Build Tool Plugin (`SwiftLintBuildToolPlugin`). Run
 - **Version/build**: Use `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` from project.yml in Info.plist, not hardcoded values
 - **About panel**: Uses `orderFrontStandardAboutPanel` with credits linking to Zvuk.com; version read from `Bundle.main`
 - **Removed menus**: Edit, View (tab bar, fullscreen), Help — removed via `CommandGroup(replacing:)`
+
+### Error Display
+
+- **Никогда не показывать сырые ошибки** пользователю (`String(describing:)`, `error.localizedDescription`). Все ошибки в UI проходят через `AppError.from(error)` → русскоязычное сообщение
+- **Использовать `.errorAlert($viewModel.appError)`** для показа ошибок (Apple Music-стиль нативный алерт)
+- **Свойство ошибки в ViewModel** — `var appError: AppError?`, не `String?`
+- **`CancellationError`** игнорируется (`AppError.from()` возвращает `nil`)
+- **Валидационные сообщения** (напр. "Введите токен") — НЕ ошибки, хранятся в отдельном `var validationMessage: String?` и отображаются inline
+- **Статусные сообщения** (напр. "Треки не найдены") — НЕ ошибки, хранятся в `var statusMessage: String?`
