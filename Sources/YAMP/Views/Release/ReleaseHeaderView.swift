@@ -66,7 +66,7 @@ struct ReleaseHeaderView: View {
                     } label: {
                         Label("Воспроизвести", systemImage: "play.fill")
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.accent)
                     .controlSize(.large)
 
                     Button(action: onToggleLike) {

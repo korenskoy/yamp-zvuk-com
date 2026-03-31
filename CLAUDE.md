@@ -136,6 +136,7 @@ SwiftLint integrated via SPM Build Tool Plugin (`SwiftLintBuildToolPlugin`). Run
 
 - **Language**: Russian for UI strings, English for code. Use "Альбомы" (not "Релизы") in UI
 - **SwiftUI color**: Use `Color.accentColor` (not `.accent`) with `.foregroundStyle()`
+- **Кнопки**: Не использовать `.buttonStyle(.borderedProminent)` — на macOS кнопка пропадает когда окно теряет фокус. Использовать `.buttonStyle(.accent)` (`AccentButtonStyle`) вместо этого
 - **ProgressView centering**: Full-page spinners must be outside `ScrollView` (wrapped in `Group`), not inside — `ScrollView` doesn't expand to fill available height
 - **No DMG auto-build**: Only build DMG when explicitly requested
 - **Do not forget about CacheService**

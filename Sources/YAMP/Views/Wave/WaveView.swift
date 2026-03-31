@@ -68,7 +68,7 @@ struct WaveView: View {
                             Label("Запустить волну", systemImage: "play.fill")
                         }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.accent)
                     .controlSize(.large)
                     .disabled(viewModel.isLoading)
                 }

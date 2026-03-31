@@ -154,7 +154,7 @@ struct PlaylistView: View {
             } label: {
                 Label("Воспроизвести", systemImage: "play.fill")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.accent)
             .controlSize(.large)
             .disabled(playlist.tracks.isEmpty)
 
@@ -248,7 +248,7 @@ struct PlaylistView: View {
                         showRenameSheet = false
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.accent)
                 .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }

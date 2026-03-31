@@ -133,7 +133,7 @@ struct WaveGenreSheet: View {
                 instrumental = draftInstrumental
                 dismiss()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.accent)
         }
     }
 }

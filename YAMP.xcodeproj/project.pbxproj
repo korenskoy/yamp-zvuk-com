@@ -21,6 +21,7 @@
 		3A0BF947E5E81DC0C568AC33 /* LogPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 449FE3E8B04A0B46B59CB7ED /* LogPanelView.swift */; };
 		3A235FD682DB7836672D7257 /* WaveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F914138FB7227AED3F10B27 /* WaveViewModel.swift */; };
 		3B2B6EA6F96789BD7E463D4C /* QueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42BBFF5A3DF26E4C1D8DB838 /* QueueView.swift */; };
+		3BC7D1A1022F7DFACC5CE0EF /* AccentButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CCAA2668B562C5E0A632A7D /* AccentButtonStyle.swift */; };
 		40E7DD077ACC2A6168BBCE5A /* CoverSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DFA2518F45BDC006310A36A /* CoverSheetView.swift */; };
 		48ED751EAA14B503B1551BB3 /* CollectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57984634D2017A5D61404205 /* CollectionViewModel.swift */; };
 		516027BD7B3C1C22FB3A3FEB /* VolumeControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BD2A42FA98855FAD67B9AE /* VolumeControlView.swift */; };
@@ -93,6 +94,7 @@
 		14872D27CC2369B1C92843C5 /* PopularViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopularViewModel.swift; sourceTree = "<group>"; };
 		16D5A9F053C117182322E985 /* RecommendedPlaylistCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendedPlaylistCardView.swift; sourceTree = "<group>"; };
 		17B3368D367E2D7AF9CE5E19 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		1CCAA2668B562C5E0A632A7D /* AccentButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccentButtonStyle.swift; sourceTree = "<group>"; };
 		1FC8BAB9EB06A8A5A45D7897 /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
 		212C38DE20EAA0C75D37FEF7 /* ArtistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistView.swift; sourceTree = "<group>"; };
 		2145120D6782F1BF1B6D9DB7 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -410,6 +412,7 @@
 		ED59F6B659B09CFBAC9A938D /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				1CCAA2668B562C5E0A632A7D /* AccentButtonStyle.swift */,
 				5AF14711E34FC200C3623F3B /* ArtistThumbnailView.swift */,
 				A6DC0283C061535F3728AF12 /* CachedAsyncImage.swift */,
 				9DFA2518F45BDC006310A36A /* CoverSheetView.swift */,
@@ -535,6 +538,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3BC7D1A1022F7DFACC5CE0EF /* AccentButtonStyle.swift in Sources */,
 				A42B32E7165B4430D7FD4B2F /* AppError.swift in Sources */,
 				9E985E6741733712FC308E75 /* AppSettings.swift in Sources */,
 				FC08D101767264BD76806118 /* AppState.swift in Sources */,
@@ -621,7 +625,7 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 86;
+				CURRENT_PROJECT_VERSION = 90;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
@@ -761,7 +765,7 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 86;
+				CURRENT_PROJECT_VERSION = 90;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;

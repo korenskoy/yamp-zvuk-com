@@ -88,7 +88,7 @@ struct ArtistHeaderView: View {
             Button(action: onPlay) {
                 Label("Слушать", systemImage: "play.fill")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.accent)
             .controlSize(.large)
 
             Button(action: onToggleSubscribe) {

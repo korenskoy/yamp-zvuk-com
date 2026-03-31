@@ -55,7 +55,8 @@ struct AuthView: View {
                             .frame(width: 80)
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.accent)
+                .controlSize(.large)
                 .disabled(viewModel.isLoading || viewModel.token.isEmpty)
 
                 if let message = viewModel.validationMessage {
