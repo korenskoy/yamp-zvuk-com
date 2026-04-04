@@ -163,10 +163,7 @@ struct SettingsView: View {
         subscriptionLoading = true
         defer { subscriptionLoading = false }
 
-        async let subResult = try? client.getSubscription()
-        async let featResult = try? client.getFeaturedInfo()
-
-        subscription = await subResult?.subscription
-        featuredInfo = await featResult
+        subscription = (try? await client.getSubscription())?.subscription
+        featuredInfo = try? await client.getFeaturedInfo()
     }
 }

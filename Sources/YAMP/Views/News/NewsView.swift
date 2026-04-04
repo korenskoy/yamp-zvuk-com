@@ -115,16 +115,27 @@ struct NewsView: View {
         }
     }
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let isoFallbackFormatter = ISO8601DateFormatter()
+
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "d MMMM"
+        return formatter
+    }()
+
     private struct DateGroup {
         let label: String
         let items: [ZvukNotification]
     }
 
     private func groupByDate(_ notifications: [ZvukNotification]) -> [DateGroup] {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let fallback = ISO8601DateFormatter()
-
         let calendar = Calendar.current
         let now = Date()
 
@@ -133,8 +144,8 @@ struct NewsView: View {
         var currentItems: [ZvukNotification] = []
 
         for notification in notifications {
-            let date = formatter.date(from: notification.createdAt)
-                ?? fallback.date(from: notification.createdAt)
+            let date = Self.isoFormatter.date(from: notification.createdAt)
+                ?? Self.isoFallbackFormatter.date(from: notification.createdAt)
                 ?? now
 
             let label: String
@@ -143,10 +154,7 @@ struct NewsView: View {
             } else if calendar.isDateInYesterday(date) {
                 label = "Вчера"
             } else {
-                let df = DateFormatter()
-                df.locale = Locale(identifier: "ru_RU")
-                df.dateFormat = "d MMMM"
-                label = df.string(from: date)
+                label = Self.dayFormatter.string(from: date)
             }
 
             if label != currentLabel {

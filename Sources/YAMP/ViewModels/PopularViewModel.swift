@@ -53,35 +53,24 @@ final class PopularViewModel {
 
         let enabledSections = grid.sections.filter(\.enabled)
 
-        let results: [(Int, PopularSectionData?)] = await withTaskGroup(of: (Int, PopularSectionData?).self) { group in
-            for (index, section) in enabledSections.enumerated() {
-                let sectionId = "\(index)"
-                group.addTask {
-                    do {
-                        switch section.type {
-                        case "listing":
-                            return (index, try await self.loadListingSection(section, id: sectionId, cache: cache))
-                        case "content":
-                            return (index, try await self.loadContentSection(section, id: sectionId, cache: cache))
-                        default:
-                            return (index, nil)
-                        }
-                    } catch {
-                        // Сетевые ошибки логируются транспортным слоем клиента в LogStore
-                        return (index, nil)
-                    }
+        var loaded: [PopularSectionData] = []
+        for (index, section) in enabledSections.enumerated() {
+            let sectionId = "\(index)"
+            do {
+                let data: PopularSectionData? = switch section.type {
+                case "listing":
+                    try await loadListingSection(section, id: sectionId, cache: cache)
+                case "content":
+                    try await loadContentSection(section, id: sectionId, cache: cache)
+                default:
+                    nil
                 }
+                if let data { loaded.append(data) }
+            } catch {
+                // Сетевые ошибки логируются транспортным слоем клиента в LogStore
             }
-            var collected: [(Int, PopularSectionData?)] = []
-            for await result in group {
-                collected.append(result)
-            }
-            return collected
         }
-
-        sections = results
-            .sorted { $0.0 < $1.0 }
-            .compactMap(\.1)
+        sections = loaded
     }
 
     // MARK: - Section Loading

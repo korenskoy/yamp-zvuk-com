@@ -45,23 +45,14 @@ struct CollectionView: View {
                 )
             } else {
                 ScrollView {
+                    let simpleTracks = viewModel.likedTracks.map { track in
+                        SimpleTrack(id: track.id, title: track.title, duration: track.duration,
+                                    explicit: track.explicit, artists: track.artists, release: track.release)
+                    }
                     LazyVStack(spacing: 2) {
-                        ForEach(viewModel.likedTracks) { track in
-                            let simple = SimpleTrack(
-                                id: track.id,
-                                title: track.title,
-                                duration: track.duration,
-                                explicit: track.explicit,
-                                artists: track.artists,
-                                release: track.release
-                            )
+                        ForEach(Array(simpleTracks.enumerated()), id: \.element.id) { index, simple in
                             TrackRowView(track: simple) {
-                                let simpleTracks = viewModel.likedTracks.map { track in
-                                    SimpleTrack(id: track.id, title: track.title, duration: track.duration,
-                                                explicit: track.explicit, artists: track.artists, release: track.release)
-                                }
-                                let idx = viewModel.likedTracks.firstIndex(where: { $0.id == track.id }) ?? 0
-                                playerService.playQueue(simpleTracks, context: .liked, startAt: idx)
+                                playerService.playQueue(simpleTracks, context: .liked, startAt: index)
                             }
                         }
                     }

@@ -15,13 +15,10 @@ final class HomeViewModel {
         defer { isLoading = false }
 
         do {
-            async let recBlock = cache.getRecommendations()
-            async let editorialIDs = cache.getEditorialPlaylistIDs()
-
-            let block = try await recBlock
+            let block = try await cache.getRecommendations()
             recommendationItems = block.pages.flatMap(\.items).filter { $0 != .unknown }
 
-            let ids = try await editorialIDs
+            let ids = try await cache.getEditorialPlaylistIDs()
             if !ids.isEmpty {
                 editorialPlaylists = try await cache.getSimplePlaylists(ids)
             }

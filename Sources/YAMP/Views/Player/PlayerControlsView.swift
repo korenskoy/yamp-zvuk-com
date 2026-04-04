@@ -15,6 +15,7 @@ struct PlayerControlsView: View {
     @Environment(AppState.self) private var appState
     @Environment(PlayerService.self) private var playerService
     @Environment(CollectionService.self) private var collectionService
+    @State private var appError: AppError?
 
     var body: some View {
         HStack(spacing: 16) {
@@ -55,6 +56,7 @@ struct PlayerControlsView: View {
             // Like
             likeButton
         }
+        .errorAlert($appError)
     }
 
     // MARK: - Dislike
@@ -63,7 +65,11 @@ struct PlayerControlsView: View {
         Button {
             guard let track = playerService.currentTrack else { return }
             Task {
-                _ = try? await appState.client?.hideTrack(track.id)
+                do {
+                    _ = try await appState.client?.hideTrack(track.id)
+                } catch {
+                    appError = AppError.from(error)
+                }
                 playerService.next()
             }
         } label: {

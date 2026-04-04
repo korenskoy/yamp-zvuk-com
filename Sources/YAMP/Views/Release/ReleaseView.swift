@@ -1,6 +1,11 @@
 import SwiftUI
 import ZvukMusic
 
+private struct ExpandedReleases: Identifiable {
+    let id = UUID()
+    let items: [SimpleRelease]
+}
+
 struct ReleaseView: View {
     let releaseId: String
     @Environment(AppState.self) private var appState
@@ -8,7 +13,7 @@ struct ReleaseView: View {
     @Environment(CollectionService.self) private var collectionService
     @Environment(CacheService.self) private var cacheService
     @State private var viewModel: ReleaseViewModel
-    @State private var expandedReleases: [SimpleRelease]?
+    @State private var expandedReleases: ExpandedReleases?
 
     init(releaseId: String) {
         self.releaseId = releaseId
@@ -34,19 +39,14 @@ struct ReleaseView: View {
             viewModel = ReleaseViewModel(releaseId: releaseId)
             await viewModel.load(cache: cacheService)
         }
-        .sheet(isPresented: Binding(
-            get: { expandedReleases != nil },
-            set: { if !$0 { expandedReleases = nil } }
-        )) {
-            if let releases = expandedReleases {
-                GridSheet(title: "Похожие альбомы") {
-                    ForEach(releases) { release in
-                        ReleaseThumbnailView(release: release)
-                            .onTapGesture {
-                                expandedReleases = nil
-                                appState.selectedDestination = .release(id: release.id)
-                            }
-                    }
+        .sheet(item: $expandedReleases) { expanded in
+            GridSheet(title: "Похожие альбомы") {
+                ForEach(expanded.items) { release in
+                    ReleaseThumbnailView(release: release)
+                        .onTapGesture {
+                            expandedReleases = nil
+                            appState.selectedDestination = .release(id: release.id)
+                        }
                 }
             }
         }
@@ -115,7 +115,7 @@ struct ReleaseView: View {
                 Spacer()
 
                 Button {
-                    expandedReleases = release.related
+                    expandedReleases = ExpandedReleases(items: release.related)
                 } label: {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
                         .font(.title3)

@@ -140,6 +140,7 @@ SwiftLint integrated via SPM Build Tool Plugin (`SwiftLintBuildToolPlugin`). Run
 - **ProgressView centering**: Full-page spinners must be outside `ScrollView` (wrapped in `Group`), not inside — `ScrollView` doesn't expand to fill available height
 - **No DMG auto-build**: Only build DMG when explicitly requested
 - **Do not forget about CacheService**
+- **Sequential API requests**: The API is unofficial — never parallelize requests to Zvuk API (`TaskGroup`, `async let`). Multiple requests (section loading, batch fetching) must run sequentially to avoid traffic spikes and attention. `CacheService` is also `@MainActor`, so parallel calls would violate actor isolation
 - **All requests to API must be logged** (look at LogStore) — never use empty `catch {}`, always surface or log errors
 - **Last.fm integration**: `LastFMService` handles auth (Keychain), now playing, scrobble, and track love/unlove sync via `LastFM.swift` package. When a track is liked/unliked in Zvuk, `CollectionService` automatically calls `loveTrack`/`unloveTrack` on Last.fm (if scrobbling is enabled). API calls go through `LastFMAPIClient` (nonisolated wrapper for Swift 6 Sendable). All Last.fm requests are logged via `LogStore.appendLastFM`
 - **No dead code**: Do not keep unused services/view models

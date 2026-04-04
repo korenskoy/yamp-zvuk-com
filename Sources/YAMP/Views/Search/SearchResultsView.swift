@@ -1,6 +1,17 @@
 import SwiftUI
 import ZvukMusic
 
+private enum ExpandedSheet: Identifiable {
+    case artists(title: String, items: [SimpleArtist])
+    case releases(title: String, items: [SimpleRelease])
+
+    var id: String {
+        switch self {
+        case .artists(let title, _), .releases(let title, _): return title
+        }
+    }
+}
+
 struct SearchResultsView: View {
     let viewModel: SearchViewModel
     @Environment(AppState.self) private var appState
@@ -9,9 +20,7 @@ struct SearchResultsView: View {
     private let minItemWidth: CGFloat = 140
     private let maxItemWidth: CGFloat = 180
     private let gridSpacing: CGFloat = 16
-    @State private var expandedSheetTitle: String?
-    @State private var expandedArtists: [SimpleArtist] = []
-    @State private var expandedReleases: [SimpleRelease] = []
+    @State private var expandedSheet: ExpandedSheet?
 
     var body: some View {
         ScrollView {
@@ -33,28 +42,26 @@ struct SearchResultsView: View {
             }
             .padding(20)
         }
-        .sheet(isPresented: Binding(
-            get: { expandedSheetTitle != nil },
-            set: { if !$0 { expandedSheetTitle = nil } }
-        )) {
-            if let title = expandedSheetTitle {
+        .sheet(item: $expandedSheet) { sheet in
+            switch sheet {
+            case .artists(let title, let artists):
                 GridSheet(title: title) {
-                    if !expandedArtists.isEmpty {
-                        ForEach(expandedArtists) { artist in
-                            ArtistThumbnailView(artist: artist)
-                                .onTapGesture {
-                                    expandedSheetTitle = nil
-                                    appState.selectedDestination = .artist(id: artist.id)
-                                }
-                        }
-                    } else if !expandedReleases.isEmpty {
-                        ForEach(expandedReleases) { release in
-                            ReleaseThumbnailView(release: release)
-                                .onTapGesture {
-                                    expandedSheetTitle = nil
-                                    appState.selectedDestination = .release(id: release.id)
-                                }
-                        }
+                    ForEach(artists) { artist in
+                        ArtistThumbnailView(artist: artist)
+                            .onTapGesture {
+                                expandedSheet = nil
+                                appState.selectedDestination = .artist(id: artist.id)
+                            }
+                    }
+                }
+            case .releases(let title, let releases):
+                GridSheet(title: title) {
+                    ForEach(releases) { release in
+                        ReleaseThumbnailView(release: release)
+                            .onTapGesture {
+                                expandedSheet = nil
+                                appState.selectedDestination = .release(id: release.id)
+                            }
                     }
                 }
             }
@@ -67,9 +74,7 @@ struct SearchResultsView: View {
     private var topContent: some View {
         if !viewModel.topArtists.isEmpty {
             section("Артисты", expandAction: {
-                expandedArtists = viewModel.topArtists
-                expandedReleases = []
-                expandedSheetTitle = "Артисты"
+                expandedSheet = .artists(title: "Артисты", items: viewModel.topArtists)
             }) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -102,9 +107,7 @@ struct SearchResultsView: View {
 
         if !viewModel.topReleases.isEmpty {
             section("Альбомы", expandAction: {
-                expandedReleases = viewModel.topReleases
-                expandedArtists = []
-                expandedSheetTitle = "Альбомы"
+                expandedSheet = .releases(title: "Альбомы", items: viewModel.topReleases)
             }) {
                 releasesHScroll(viewModel.topReleases)
             }

@@ -32,17 +32,18 @@ final class LyricsViewModel {
         // Binary search: find last line whose timestamp <= time
         var low = 0
         var high = lines.count - 1
-        var result = 0
+        var newIndex = 0
         while low <= high {
             let mid = (low + high) / 2
             if lines[mid].timestamp <= time {
-                result = mid
+                newIndex = mid
                 low = mid + 1
             } else {
                 high = mid - 1
             }
         }
-        currentLineIndex = result
+        guard newIndex != currentLineIndex else { return }
+        currentLineIndex = newIndex
     }
 
     var hasLyrics: Bool {

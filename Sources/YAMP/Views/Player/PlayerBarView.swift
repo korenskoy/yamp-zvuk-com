@@ -23,6 +23,7 @@ struct PlayerBarView: View {
     @State private var showQueue = false
     @State private var showCover = false
     @State private var showProgress = false
+    @State private var appError: AppError?
 
     var body: some View {
         if let track = playerService.currentTrack {
@@ -66,16 +67,21 @@ struct PlayerBarView: View {
                             guard let track = playerService.currentTrack else { return }
                             Task {
                                 guard let client = appState.client else { return }
-                                let result = try? await client.getRadioByTrack(track.id)
-                                if let tracks = result?.tracks, !tracks.isEmpty {
-                                    let simple = tracks.map {
-                                        SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
-                                                    explicit: $0.explicit, artists: $0.artists, release: $0.release)
+                                do {
+                                    let result = try await client.getRadioByTrack(track.id)
+                                    let tracks = result.tracks
+                                    if !tracks.isEmpty {
+                                        let simple = tracks.map {
+                                            SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
+                                                        explicit: $0.explicit, artists: $0.artists, release: $0.release)
+                                        }
+                                        playerService.playQueue(
+                                            simple,
+                                            context: .radioTrack(id: track.id)
+                                        )
                                     }
-                                    playerService.playQueue(
-                                        simple,
-                                        context: .radioTrack(id: track.id)
-                                    )
+                                } catch {
+                                    appError = AppError.from(error)
                                 }
                             }
                         } label: {
@@ -116,6 +122,7 @@ struct PlayerBarView: View {
                 ProgressBarView(isExpanded: $showProgress)
                     .padding(.horizontal, 16)
             }
+            .errorAlert($appError)
             .modifier(LiquidGlassBarModifier())
             .animation(.easeInOut(duration: 0.2), value: showProgress)
         }

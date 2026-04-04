@@ -7,6 +7,21 @@ struct HistoryView: View {
     @Environment(CollectionService.self) private var collectionService
     @Environment(ListeningHistoryStore.self) private var historyStore
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let isoFallbackFormatter = ISO8601DateFormatter()
+
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.unitsStyle = .abbreviated
+        return formatter
+    }()
+
     var body: some View {
         ZStack {
             if historyStore.entries.isEmpty {
@@ -77,14 +92,10 @@ struct HistoryView: View {
     }
 
     private func formatDate(_ iso: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = formatter.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) else {
+        guard let date = Self.isoFormatter.date(from: iso)
+                ?? Self.isoFallbackFormatter.date(from: iso) else {
             return ""
         }
-        let relative = RelativeDateTimeFormatter()
-        relative.locale = Locale(identifier: "ru_RU")
-        relative.unitsStyle = .abbreviated
-        return relative.localizedString(for: date, relativeTo: Date())
+        return Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 }

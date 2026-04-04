@@ -39,7 +39,6 @@
 		72357F0F14DB98ED3DE922D7 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494ECEE3C86B74822C4B0F96 /* GeneratedCoverView.swift */; };
 		7E3AFBE05893042F4A443E0E /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B29E70C9FB41BF4DF39164B /* SidebarView.swift */; };
 		7E4F2D9A1DDD744E789F0A56 /* ReleaseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DD26E992F22D45BF7020D9E /* ReleaseViewModel.swift */; };
-		7EE3E55012490F94F9D337FE /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F0C52FA9C2B68BD1C590F1 /* PlayerViewModel.swift */; };
 		80616E9684CC9187A528F5EA /* NewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43DBD00EF82FBE27A78A532C /* NewsView.swift */; };
 		81D99B51700DC88ECBBAEB48 /* LyricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F886F62245B413BCDC096C85 /* LyricsService.swift */; };
 		8269B42898834E6404EFAC71 /* ErrorAlertModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9861F90CDAE4A6E7FAB206EA /* ErrorAlertModifier.swift */; };
@@ -91,7 +90,6 @@
 		060B988B9A1A74634B6D6D6A /* PlaylistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistView.swift; sourceTree = "<group>"; };
 		0DBDB6523A6C78DB0CE18708 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1305FEEB8C840A626DB44C83 /* PlayerBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerBarView.swift; sourceTree = "<group>"; };
-		13F0C52FA9C2B68BD1C590F1 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
 		14872D27CC2369B1C92843C5 /* PopularViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopularViewModel.swift; sourceTree = "<group>"; };
 		16D5A9F053C117182322E985 /* RecommendedPlaylistCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendedPlaylistCardView.swift; sourceTree = "<group>"; };
 		17B3368D367E2D7AF9CE5E19 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
@@ -348,7 +346,6 @@
 				FBF92A9D6DD0DDA99A5415F7 /* HomeViewModel.swift */,
 				3C921DB8234EF537940AAF28 /* LyricsViewModel.swift */,
 				569D8A64079EFF09E2D44FFA /* NewsViewModel.swift */,
-				13F0C52FA9C2B68BD1C590F1 /* PlayerViewModel.swift */,
 				58A7E1D94EA12A43C5D068E0 /* PlaylistsViewModel.swift */,
 				78790803623E8810A88D9E4C /* PlaylistViewModel.swift */,
 				14872D27CC2369B1C92843C5 /* PopularViewModel.swift */,
@@ -587,7 +584,6 @@
 				31F6F11C0B1102A09E7BC362 /* PlayerBarView.swift in Sources */,
 				986DDDEF0024BCBDA4553E46 /* PlayerControlsView.swift in Sources */,
 				B7FD54E63932FE1D07CDB5CD /* PlayerService.swift in Sources */,
-				7EE3E55012490F94F9D337FE /* PlayerViewModel.swift in Sources */,
 				5530851F48BDCABA0ADCEE03 /* PlaylistView.swift in Sources */,
 				8E6A7D459018BF4B00D1FBFA /* PlaylistViewModel.swift in Sources */,
 				A5D86313D9DA8AF2AE603CD1 /* PlaylistsViewModel.swift in Sources */,
@@ -629,7 +625,7 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 98;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
@@ -769,7 +765,7 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 98;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;

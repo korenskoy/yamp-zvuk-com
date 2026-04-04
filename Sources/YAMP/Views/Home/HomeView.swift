@@ -1,6 +1,17 @@
 import SwiftUI
 import ZvukMusic
 
+extension RecommendationItem: Identifiable {
+    public var id: String {
+        switch self {
+        case .artist(let artist): return artist.id
+        case .release(let release): return release.id
+        case .playlist(let playlist): return playlist.id
+        case .unknown: return "unknown"
+        }
+    }
+}
+
 struct HomeView: View {
     @Environment(AppState.self) private var appState
     @Environment(CacheService.self) private var cacheService
@@ -49,7 +60,7 @@ struct HomeView: View {
                 .padding(.horizontal)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: minItemWidth, maximum: maxItemWidth), spacing: spacing, alignment: .top)], spacing: spacing) {
-                ForEach(Array(viewModel.recommendationItems.enumerated()), id: \.offset) { _, item in
+                ForEach(viewModel.recommendationItems) { item in
                     recommendationCard(item)
                 }
             }
