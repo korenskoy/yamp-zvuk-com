@@ -63,28 +63,7 @@ struct PlayerBarView: View {
                             QueueView()
                         }
 
-                        Button {
-                            guard let track = playerService.currentTrack else { return }
-                            Task {
-                                guard let client = appState.client else { return }
-                                do {
-                                    let result = try await client.getRadioByTrack(track.id)
-                                    let tracks = result.tracks
-                                    if !tracks.isEmpty {
-                                        let simple = tracks.map {
-                                            SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
-                                                        explicit: $0.explicit, artists: $0.artists, release: $0.release)
-                                        }
-                                        playerService.playQueue(
-                                            simple,
-                                            context: .radioTrack(id: track.id)
-                                        )
-                                    }
-                                } catch {
-                                    appError = AppError.from(error)
-                                }
-                            }
-                        } label: {
+                        Button(action: playRadioByTrack) {
                             Image(systemName: "dot.radiowaves.left.and.right")
                                 .font(.callout)
                         }
@@ -125,6 +104,29 @@ struct PlayerBarView: View {
             .errorAlert($appError)
             .modifier(LiquidGlassBarModifier())
             .animation(.easeInOut(duration: 0.2), value: showProgress)
+        }
+    }
+
+    private func playRadioByTrack() {
+        guard let track = playerService.currentTrack else { return }
+        Task {
+            guard let client = appState.client else { return }
+            do {
+                let result = try await client.getRadioByTrack(track.id)
+                let tracks = result.tracks
+                if !tracks.isEmpty {
+                    let simple = tracks.map {
+                        SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
+                                    explicit: $0.explicit, artists: $0.artists, release: $0.release)
+                    }
+                    playerService.playQueue(
+                        simple,
+                        context: .radioTrack(id: track.id)
+                    )
+                }
+            } catch {
+                appError = AppError.from(error)
+            }
         }
     }
 

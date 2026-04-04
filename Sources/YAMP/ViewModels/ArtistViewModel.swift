@@ -17,6 +17,35 @@ final class ArtistViewModel {
         self.artistId = artistId
     }
 
+    func loadRadio(client: ZvukClient?, playerService: PlayerService) async {
+        guard let client, let artist else { return }
+        do {
+            let result = try await client.getRadioByArtist(artist.id)
+            let tracks = result.tracks
+            if !tracks.isEmpty {
+                let simple = tracks.map {
+                    SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
+                                explicit: $0.explicit, artists: $0.artists, release: $0.release)
+                }
+                playerService.playQueue(
+                    simple,
+                    context: .radioArtist(id: artist.id)
+                )
+            }
+        } catch {
+            self.appError = AppError.from(error)
+        }
+    }
+
+    func hideArtist(client: ZvukClient?) async {
+        guard let artist else { return }
+        do {
+            _ = try await client?.addToHidden(artist.id, type: .artist)
+        } catch {
+            self.appError = AppError.from(error)
+        }
+    }
+
     func load(cache: CacheService) async {
         isLoading = true
         appError = nil

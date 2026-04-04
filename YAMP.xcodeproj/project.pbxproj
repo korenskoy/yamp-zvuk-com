@@ -18,6 +18,7 @@
 		2F05F08F5289C61C7C63F17C /* WaveGenreSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF464127292A3B3607D0ACF9 /* WaveGenreSheet.swift */; };
 		31F6F11C0B1102A09E7BC362 /* PlayerBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305FEEB8C840A626DB44C83 /* PlayerBarView.swift */; };
 		341BDF6FCF0F0909DEB71865 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17B3368D367E2D7AF9CE5E19 /* KeychainHelper.swift */; };
+		34B26EAF0EA849847A24AFF9 /* PlaylistHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 053085B5E0F23519CD77082A /* PlaylistHeaderView.swift */; };
 		3A0BF947E5E81DC0C568AC33 /* LogPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 449FE3E8B04A0B46B59CB7ED /* LogPanelView.swift */; };
 		3A235FD682DB7836672D7257 /* WaveViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F914138FB7227AED3F10B27 /* WaveViewModel.swift */; };
 		3B2B6EA6F96789BD7E463D4C /* QueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42BBFF5A3DF26E4C1D8DB838 /* QueueView.swift */; };
@@ -80,6 +81,7 @@
 		E8EEF1B0B8853437BBFC180F /* QueueItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCE0821AD4C84D6083F9AC0 /* QueueItem.swift */; };
 		EEEF3A6658C6377FFEF2926D /* RecommendedPlaylistCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16D5A9F053C117182322E985 /* RecommendedPlaylistCardView.swift */; };
 		EF45E81506E194486BB9D87A /* ImageCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED74DB6FAC4C1E6BA873C19D /* ImageCacheService.swift */; };
+		EF82F6D5BCF1AC4B109AF38F /* PlayableCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA3F8F0D71533667208D1C53 /* PlayableCoverView.swift */; };
 		F05B92AABEBE732DFF9545E5 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B39087A92C40C165E5853C9 /* HistoryView.swift */; };
 		F6326A38AFE2AB0285BF07D8 /* BlacklistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5695D684BC9163CA75B2EA7C /* BlacklistView.swift */; };
 		F7B5A1300C0E2A9FF9C38BA2 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841FBDF67265E80438F3A915 /* AuthService.swift */; };
@@ -87,6 +89,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		053085B5E0F23519CD77082A /* PlaylistHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistHeaderView.swift; sourceTree = "<group>"; };
 		060B988B9A1A74634B6D6D6A /* PlaylistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistView.swift; sourceTree = "<group>"; };
 		0DBDB6523A6C78DB0CE18708 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1305FEEB8C840A626DB44C83 /* PlayerBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerBarView.swift; sourceTree = "<group>"; };
@@ -144,6 +147,7 @@
 		A19AD2285E4BE1AE5EF958EF /* LastFMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastFMService.swift; sourceTree = "<group>"; };
 		A6DC0283C061535F3728AF12 /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
 		A8AA4CE15BA4A264D67F3821 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
+		AA3F8F0D71533667208D1C53 /* PlayableCoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayableCoverView.swift; sourceTree = "<group>"; };
 		BE32548E4889DC8C558A7E49 /* TrackRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRowView.swift; sourceTree = "<group>"; };
 		BF464127292A3B3607D0ACF9 /* WaveGenreSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveGenreSheet.swift; sourceTree = "<group>"; };
 		C361DD5974539BC9EC5C747C /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
@@ -331,6 +335,7 @@
 		B16FAEDACFC09B2D038D2383 /* Playlists */ = {
 			isa = PBXGroup;
 			children = (
+				053085B5E0F23519CD77082A /* PlaylistHeaderView.swift */,
 				060B988B9A1A74634B6D6D6A /* PlaylistView.swift */,
 			);
 			path = Playlists;
@@ -422,6 +427,7 @@
 				5659BBA1809C2904D32C8B1B /* GridSheet.swift */,
 				449FE3E8B04A0B46B59CB7ED /* LogPanelView.swift */,
 				596C1D28E5A73986ECEB6E60 /* MouseNavigationHandler.swift */,
+				AA3F8F0D71533667208D1C53 /* PlayableCoverView.swift */,
 				16D5A9F053C117182322E985 /* RecommendedPlaylistCardView.swift */,
 				9CBDA26B00B35C2C7CBFCA53 /* ReleaseThumbnailView.swift */,
 				BE32548E4889DC8C558A7E49 /* TrackRowView.swift */,
@@ -581,9 +587,11 @@
 				60D015CD3B35888F3C56E77F /* NewsViewModel.swift in Sources */,
 				5EA215034C28B6A0F88A9460 /* NotificationRowView.swift in Sources */,
 				D65E2FA442386ADE8E53F516 /* NowPlayingView.swift in Sources */,
+				EF82F6D5BCF1AC4B109AF38F /* PlayableCoverView.swift in Sources */,
 				31F6F11C0B1102A09E7BC362 /* PlayerBarView.swift in Sources */,
 				986DDDEF0024BCBDA4553E46 /* PlayerControlsView.swift in Sources */,
 				B7FD54E63932FE1D07CDB5CD /* PlayerService.swift in Sources */,
+				34B26EAF0EA849847A24AFF9 /* PlaylistHeaderView.swift in Sources */,
 				5530851F48BDCABA0ADCEE03 /* PlaylistView.swift in Sources */,
 				8E6A7D459018BF4B00D1FBFA /* PlaylistViewModel.swift in Sources */,
 				A5D86313D9DA8AF2AE603CD1 /* PlaylistsViewModel.swift in Sources */,
@@ -625,7 +633,7 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 98;
+				CURRENT_PROJECT_VERSION = 101;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
@@ -765,7 +773,7 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 98;
+				CURRENT_PROJECT_VERSION = 101;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;

@@ -57,13 +57,14 @@ struct NewsView: View {
         .task(id: viewModel.selectedTab) {
             await viewModel.load(client: appState.client)
         }
-        .onAppear {
-            if appState.hasUnreadNews {
-                appState.hasUnreadNews = false
-                Task {
-                    try? await appState.client?.readAllNotifications()
-                }
-            }
+        .onAppear(perform: markNewsAsRead)
+    }
+
+    private func markNewsAsRead() {
+        guard appState.hasUnreadNews else { return }
+        appState.hasUnreadNews = false
+        Task {
+            try? await appState.client?.readAllNotifications()
         }
     }
 

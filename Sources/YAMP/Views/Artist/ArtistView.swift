@@ -65,25 +65,7 @@ struct ArtistView: View {
                         )
                     },
                     onRadio: {
-                        Task {
-                            guard let client = appState.client else { return }
-                            do {
-                                let result = try await client.getRadioByArtist(artist.id)
-                                let tracks = result.tracks
-                                if !tracks.isEmpty {
-                                    let simple = tracks.map {
-                                        SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
-                                                    explicit: $0.explicit, artists: $0.artists, release: $0.release)
-                                    }
-                                    playerService.playQueue(
-                                        simple,
-                                        context: .radioArtist(id: artist.id)
-                                    )
-                                }
-                            } catch {
-                                viewModel.appError = AppError.from(error)
-                            }
-                        }
+                        Task { await viewModel.loadRadio(client: appState.client, playerService: playerService) }
                     },
                     onToggleSubscribe: {
                         Task {
@@ -91,13 +73,7 @@ struct ArtistView: View {
                         }
                     },
                     onHideArtist: {
-                        Task {
-                            do {
-                                _ = try await appState.client?.addToHidden(artist.id, type: .artist)
-                            } catch {
-                                viewModel.appError = AppError.from(error)
-                            }
-                        }
+                        Task { await viewModel.hideArtist(client: appState.client) }
                     }
                 )
 

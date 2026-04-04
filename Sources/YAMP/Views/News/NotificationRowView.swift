@@ -238,16 +238,26 @@ struct NotificationRowView: View {
 
     // MARK: - Helpers
 
-    private func formatRelativeDate(_ iso: String) -> String {
+    private static let isoFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = formatter.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) else {
+        return formatter
+    }()
+
+    private static let isoFallbackFormatter = ISO8601DateFormatter()
+
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.unitsStyle = .abbreviated
+        return formatter
+    }()
+
+    private func formatRelativeDate(_ iso: String) -> String {
+        guard let date = Self.isoFormatter.date(from: iso) ?? Self.isoFallbackFormatter.date(from: iso) else {
             return ""
         }
-        let relative = RelativeDateTimeFormatter()
-        relative.locale = Locale(identifier: "ru_RU")
-        relative.unitsStyle = .abbreviated
-        return relative.localizedString(for: date, relativeTo: Date())
+        return Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 
     private func formatDuration(_ seconds: Int) -> String {
@@ -274,104 +284,4 @@ struct NotificationRowView: View {
         if mod10 >= 2 && mod10 <= 4 { return "трека" }
         return "треков"
     }
-}
-
-// MARK: - Playable Cover (hover play button for releases)
-
-private struct PlayableCoverView: View {
-    let src: String?
-    let size: CGFloat
-    let releaseId: String
-
-    @Environment(PlayerService.self) private var playerService
-    @Environment(CacheService.self) private var cacheService
-    @State private var isHovered = false
-
-    private var isPlayingThisRelease: Bool {
-        guard let current = playerService.currentTrack else { return false }
-        return current.release?.id == releaseId
-    }
-
-    var body: some View {
-        ZStack {
-            // Cover image
-            Group {
-                if let src,
-                   let url = URL(string: zvukImageURL(src: src, width: Int(size * 2), height: Int(size * 2))) {
-                    CachedAsyncImage(url: url) { image in
-                        image.scaledToFill()
-                    } placeholder: {
-                        placeholder
-                    }
-                } else {
-                    placeholder
-                }
-            }
-            .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-
-            // Play/pause overlay
-            if isHovered || isPlayingThisRelease {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(.black.opacity(0.45))
-                    .frame(width: size, height: size)
-
-                Image(systemName: isPlayingThisRelease && playerService.isPlaying
-                      ? "pause.fill"
-                      : "play.fill")
-                    .font(.title3)
-                    .foregroundStyle(.white)
-            }
-        }
-        .animation(.easeInOut(duration: 0.2), value: isHovered)
-        .frame(width: size, height: size)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-        .onTapGesture {
-            if isPlayingThisRelease {
-                playerService.togglePlayPause()
-            } else {
-                Task {
-                    await playRelease()
-                }
-            }
-        }
-    }
-
-    private var placeholder: some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(.quaternary)
-            .frame(width: size, height: size)
-            .overlay {
-                Image(systemName: "music.note")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
-    }
-
-    private func playRelease() async {
-        do {
-            let releases = try await cacheService.getReleases([releaseId])
-            guard let release = releases.first, !release.tracks.isEmpty else { return }
-            playerService.playQueue(release.tracks, context: .album(id: releaseId))
-        } catch {
-            // Сетевые ошибки логируются транспортным слоем клиента в LogStore
-        }
-    }
-}
-
-// MARK: - Image URL helper
-
-private func zvukImageURL(src: String, width: Int, height: Int) -> String {
-    var urlString = src
-    if urlString.hasPrefix("/") {
-        urlString = "https://zvuk.com\(urlString)"
-    }
-    guard var components = URLComponents(string: urlString) else { return urlString }
-    var queryItems = components.queryItems ?? []
-    queryItems.removeAll { $0.name == "size" }
-    queryItems.append(URLQueryItem(name: "size", value: "\(width)x\(height)"))
-    components.queryItems = queryItems
-    return components.string ?? urlString
 }
