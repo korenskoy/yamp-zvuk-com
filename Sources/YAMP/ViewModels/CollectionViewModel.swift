@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import ZvukMusic
 
 enum CollectionTab: String, CaseIterable {
@@ -22,10 +23,14 @@ final class CollectionViewModel {
         appError = nil
         defer { isLoading = false }
 
-        var waited = 0
-        while !collectionService.isLoaded && waited < 200 {
-            try? await Task.sleep(for: .milliseconds(50))
-            waited += 1
+        if !collectionService.isLoaded {
+            await withCheckedContinuation { continuation in
+                withObservationTracking {
+                    _ = collectionService.isLoaded
+                } onChange: {
+                    Task { @MainActor in continuation.resume() }
+                }
+            }
         }
         guard collectionService.isLoaded else { return }
 

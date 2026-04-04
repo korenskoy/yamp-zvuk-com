@@ -5,13 +5,11 @@ import ZvukMusic
 @Observable
 final class AuthService {
     private(set) var isValidating = false
-    private(set) var error: String?
 
     private static let tokenKey = "zvuk_token"
 
     func validateToken(_ token: String) async throws -> ProfileResult {
         isValidating = true
-        error = nil
         defer { isValidating = false }
 
         let client = ZvukClient(token: token)

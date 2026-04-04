@@ -10,14 +10,13 @@ final class ListeningHistoryStore {
     private static let fileName = "listening_history.json"
     private static let isoFormatter = ISO8601DateFormatter()
 
-    private var fileURL: URL {
+    private let fileURL: URL
+
+    init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let dir = appSupport.appendingPathComponent("YAMP", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent(Self.fileName)
-    }
-
-    init() {
+        fileURL = dir.appendingPathComponent(Self.fileName)
         load()
     }
 

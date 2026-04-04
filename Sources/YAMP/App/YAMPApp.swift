@@ -51,8 +51,9 @@ struct YAMPApp: App {
                 await appState.restoreSession()
                 logStore.attach(to: appState.client)
                 if appState.isAuthenticated {
-                    await collectionService.loadCollection(client: appState.client)
-                    await appState.checkUnreadNews()
+                    async let loadCol: Void = collectionService.loadCollection(client: appState.client)
+                    async let checkNews: Void = appState.checkUnreadNews()
+                    _ = await (loadCol, checkNews)
                 }
             }
         }

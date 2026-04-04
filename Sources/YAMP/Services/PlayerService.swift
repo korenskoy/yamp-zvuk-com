@@ -7,7 +7,7 @@ import ZvukMusic
 @MainActor
 @Observable
 final class PlayerService {
-    enum RepeatMode { case off, one, all }
+    enum RepeatMode: Int, Codable { case off, one, all }
 
     private(set) var currentTrack: SimpleTrack?
     private(set) var queue: [QueueItem] = []
@@ -184,13 +184,8 @@ final class PlayerService {
         let quality = appSettings?.preferredQuality ?? .high
 
         do {
-            let urlString: String
-            if let cache = cacheService {
-                urlString = try await cache.resolveStreamURL(trackId: track.id, quality: quality)
-            } else {
-                guard let client = appState?.client else { return }
-                urlString = try await resolveStreamURL(client: client, trackId: track.id, quality: quality)
-            }
+            guard let cache = cacheService else { return }
+            let urlString = try await cache.resolveStreamURL(trackId: track.id, quality: quality)
             guard let url = URL(string: urlString) else { return }
 
             let item = AVPlayerItem(url: url)
@@ -201,29 +196,6 @@ final class PlayerService {
             updateNowPlayingInfo()
         } catch {
             isPlaying = false
-        }
-    }
-
-    private func resolveStreamURL(client: ZvukClient, trackId: String, quality: StreamQuality) async throws -> String {
-        // Try direct stream first (non-DRM)
-        if let direct = try? await client.getDirectStreamURL(trackId, quality: quality) {
-            return direct.stream
-        }
-
-        // Map StreamQuality to Quality for GraphQL API
-        let gqlQuality: Quality = switch quality {
-        case .mid: .mid
-        case .high: .high
-        case .flac: .flac
-        }
-
-        do {
-            return try await client.getStreamURL(trackId, quality: gqlQuality)
-        } catch let error as ZvukError {
-            if case .subscriptionRequired = error {
-                return try await client.getStreamURL(trackId, quality: .mid)
-            }
-            throw error
         }
     }
 
@@ -368,13 +340,12 @@ final class PlayerService {
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
 
-        // Load artwork asynchronously
+        // Load artwork asynchronously via image cache
         if let src = track.release?.image?.getURL(width: 600, height: 600),
            let url = URL(string: src) {
             let trackId = track.id
             Task.detached {
-                guard let (data, _) = try? await URLSession.shared.data(from: url),
-                      let nsImage = NSImage(data: data) else { return }
+                guard let nsImage = await ImageCacheService.shared.image(for: url) else { return }
                 let artwork = MPMediaItemArtwork(boundsSize: nsImage.size) { _ in nsImage }
                 await MainActor.run {
                     guard self.currentTrack?.id == trackId else { return }
@@ -399,22 +370,17 @@ final class PlayerService {
         let queue: [QueueItem]
         let queueIndex: Int
         let isShuffled: Bool
-        let repeatMode: Int // 0=off, 1=one, 2=all
+        let repeatMode: RepeatMode
     }
 
     private static let stateKey = "playerState"
 
     func saveState() {
-        let modeRaw: Int = switch repeatMode {
-        case .off: 0
-        case .one: 1
-        case .all: 2
-        }
         let state = SavedState(
             queue: queue,
             queueIndex: queueIndex,
             isShuffled: isShuffled,
-            repeatMode: modeRaw
+            repeatMode: repeatMode
         )
         guard let data = try? JSONEncoder().encode(state) else { return }
         UserDefaults.standard.set(data, forKey: Self.stateKey)
@@ -429,11 +395,7 @@ final class PlayerService {
         queue = state.queue
         queueIndex = min(state.queueIndex, queue.count - 1)
         isShuffled = state.isShuffled
-        repeatMode = switch state.repeatMode {
-        case 1: .one
-        case 2: .all
-        default: .off
-        }
+        repeatMode = state.repeatMode
         currentTrack = queue[safe: queueIndex]?.track
         if let track = currentTrack {
             duration = Double(track.duration)

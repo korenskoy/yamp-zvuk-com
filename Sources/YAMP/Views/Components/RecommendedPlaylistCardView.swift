@@ -77,6 +77,8 @@ struct RecommendedPlaylistCardView: View {
             guard let full = try await cacheService.getPlaylist(playlist.id),
                   !full.tracks.isEmpty else { return }
             playerService.playQueue(full.tracks, context: .playlist(id: playlist.id))
-        } catch {}
+        } catch {
+            // Сетевые ошибки логируются транспортным слоем клиента в LogStore
+        }
     }
 }

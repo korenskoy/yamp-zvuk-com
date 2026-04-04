@@ -10,7 +10,7 @@ final class CollectionService {
     private(set) var likedPlaylistIDs: Set<String> = []
     private(set) var playlistsVersion = 0
     private(set) var isLoaded = false
-    var error: String?
+    var appError: AppError?
 
     @ObservationIgnored
     private weak var cache: CacheService?
@@ -43,7 +43,7 @@ final class CollectionService {
             likedReleaseIDs = Set(collection.releases.compactMap(\.id))
             likedPlaylistIDs = Set(collection.playlists.compactMap(\.id))
         } catch {
-            self.error = String(describing: error)
+            self.appError = AppError.from(error)
         }
         isLoaded = true
     }
@@ -92,7 +92,6 @@ final class CollectionService {
             do { _ = try await client.likePlaylist(id) } catch { likedPlaylistIDs.remove(id) }
         }
         cache?.invalidateUserPlaylists()
-        await loadCollection(client: client)
         bumpPlaylistsVersion()
     }
 

@@ -355,7 +355,9 @@ private struct PlayableCoverView: View {
             let releases = try await cacheService.getReleases([releaseId])
             guard let release = releases.first, !release.tracks.isEmpty else { return }
             playerService.playQueue(release.tracks, context: .album(id: releaseId))
-        } catch {}
+        } catch {
+            // Сетевые ошибки логируются транспортным слоем клиента в LogStore
+        }
     }
 }
 

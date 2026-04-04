@@ -7,16 +7,19 @@ final class WaveViewModel {
     private static let stateKey = "waveFilters"
 
     // XY pad state (0.0...1.0)
-    var energy: Double = 0.5 { didSet { saveFilters() } }
-    var fun: Double = 0.5 { didSet { saveFilters() } }
+    var energy: Double = 0.5 { didSet { scheduleSave() } }
+    var fun: Double = 0.5 { didSet { scheduleSave() } }
 
     // Popularity filter
-    var popularity: WavePopularity? { didSet { saveFilters() } }
+    var popularity: WavePopularity? { didSet { scheduleSave() } }
 
     // Genre + language filters
-    var selectedGenres: Set<WaveGenre> = [] { didSet { saveFilters() } }
-    var language: WaveLanguage? { didSet { saveFilters() } }
-    var instrumental = false { didSet { saveFilters() } }
+    var selectedGenres: Set<WaveGenre> = [] { didSet { scheduleSave() } }
+    var language: WaveLanguage? { didSet { scheduleSave() } }
+    var instrumental = false { didSet { scheduleSave() } }
+
+    @ObservationIgnored
+    private var saveTask: Task<Void, Never>?
 
     // State
     var isLoading = false
@@ -90,7 +93,16 @@ final class WaveViewModel {
         var instrumental: Bool
     }
 
-    private func saveFilters() {
+    private func scheduleSave() {
+        saveTask?.cancel()
+        saveTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            persistFilters()
+        }
+    }
+
+    private func persistFilters() {
         let saved = SavedFilters(
             energy: energy, fun: fun,
             popularity: popularity,

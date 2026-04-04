@@ -53,6 +53,7 @@ struct NewsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .errorAlert($viewModel.appError)
         .task(id: viewModel.selectedTab) {
             await viewModel.load(client: appState.client)
         }

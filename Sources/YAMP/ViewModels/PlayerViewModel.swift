@@ -23,11 +23,11 @@ final class PlayerViewModel {
     }
 
     var currentTimeString: String {
-        formatTime(currentTime)
+        currentTime.formattedTime
     }
 
     var durationString: String {
-        formatTime(duration)
+        duration.formattedTime
     }
 
     var coverURL: String {
@@ -49,13 +49,5 @@ final class PlayerViewModel {
 
     func seek(to time: Double) {
         playerService.seek(to: time)
-    }
-
-    private func formatTime(_ time: Double) -> String {
-        guard time.isFinite && time >= 0 else { return "0:00" }
-        let total = Int(time)
-        let minutes = total / 60
-        let seconds = total % 60
-        return String(format: "%d:%02d", minutes, seconds)
     }
 }

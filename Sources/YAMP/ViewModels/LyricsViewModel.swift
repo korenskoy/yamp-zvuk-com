@@ -29,15 +29,20 @@ final class LyricsViewModel {
 
     func updateCurrentLine(at time: Double) {
         guard isSynced, !lines.isEmpty else { return }
-        var index = 0
-        for (i, line) in lines.enumerated() {
-            if line.timestamp <= time {
-                index = i
+        // Binary search: find last line whose timestamp <= time
+        var low = 0
+        var high = lines.count - 1
+        var result = 0
+        while low <= high {
+            let mid = (low + high) / 2
+            if lines[mid].timestamp <= time {
+                result = mid
+                low = mid + 1
             } else {
-                break
+                high = mid - 1
             }
         }
-        currentLineIndex = index
+        currentLineIndex = result
     }
 
     var hasLyrics: Bool {

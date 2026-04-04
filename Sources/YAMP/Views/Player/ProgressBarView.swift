@@ -79,16 +79,4 @@ struct ProgressBarView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: showExpanded)
     }
-
-    // MARK: - Helpers
-
-    private func formatTime(_ time: Double, negative: Bool = false) -> String {
-        guard time.isFinite && time >= 0 else { return negative ? "-0:00" : "0:00" }
-        let total = Int(time)
-        let prefix = negative ? "-" : ""
-        if total >= 3600 {
-            return String(format: "%@%d:%02d:%02d", prefix, total / 3600, (total % 3600) / 60, total % 60)
-        }
-        return String(format: "%@%d:%02d", prefix, total / 60, total % 60)
-    }
 }

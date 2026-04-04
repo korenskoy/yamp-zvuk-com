@@ -17,6 +17,7 @@ struct SearchView: View {
             searchContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .errorAlert($viewModel.appError)
     }
 
     @ViewBuilder

@@ -64,6 +64,7 @@
 		B0B82C0E4346F5CA229C2F7C /* PopularView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E3AF907DF64AABA9570D89 /* PopularView.swift */; };
 		B59359A6DCADFFDD5F146297 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF92A9D6DD0DDA99A5415F7 /* HomeViewModel.swift */; };
 		B7FD54E63932FE1D07CDB5CD /* PlayerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C6C1F98E1052E56C92F371 /* PlayerService.swift */; };
+		BB68634FC902E39C18D2FAA3 /* TimeInterval+Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E23CE8656C523AEFD01FE0 /* TimeInterval+Format.swift */; };
 		BE323AAE1F49BBD2AD4A4666 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1319691BAA854CAADDD955 /* AuthViewModel.swift */; };
 		BF10D4D0FABA161FD13564BC /* ArtistViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F5706B8D78C0C4FE38E4932 /* ArtistViewModel.swift */; };
 		C2856DF95DB374EC8E50B1E0 /* GridSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5659BBA1809C2904D32C8B1B /* GridSheet.swift */; };
@@ -127,6 +128,7 @@
 		79D07CFBC9AAEF030B8364EC /* EditorialPlaylistCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorialPlaylistCardView.swift; sourceTree = "<group>"; };
 		7B29E70C9FB41BF4DF39164B /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		841FBDF67265E80438F3A915 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		84E23CE8656C523AEFD01FE0 /* TimeInterval+Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TimeInterval+Format.swift"; sourceTree = "<group>"; };
 		86C6C1F98E1052E56C92F371 /* PlayerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerService.swift; sourceTree = "<group>"; };
 		882CC147A4A1534622402AAD /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
 		89E3AF907DF64AABA9570D89 /* PopularView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopularView.swift; sourceTree = "<group>"; };
@@ -457,6 +459,7 @@
 		FCB9CA44B5139FDB853A8F91 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				84E23CE8656C523AEFD01FE0 /* TimeInterval+Format.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -604,6 +607,7 @@
 				DC6A10DB69FEB879B26288DD /* SettingsView.swift in Sources */,
 				7E3AFBE05893042F4A443E0E /* SidebarView.swift in Sources */,
 				D6AD32ED70DFE71FABD85695 /* SplashView.swift in Sources */,
+				BB68634FC902E39C18D2FAA3 /* TimeInterval+Format.swift in Sources */,
 				60D1F6FAE69B4187DF94C211 /* TrackRowView.swift in Sources */,
 				516027BD7B3C1C22FB3A3FEB /* VolumeControlView.swift in Sources */,
 				2F05F08F5289C61C7C63F17C /* WaveGenreSheet.swift in Sources */,
@@ -625,7 +629,7 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 90;
+				CURRENT_PROJECT_VERSION = 95;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
@@ -765,7 +769,7 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 90;
+				CURRENT_PROJECT_VERSION = 95;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;

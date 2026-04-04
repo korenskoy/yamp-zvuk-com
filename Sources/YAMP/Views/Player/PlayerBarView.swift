@@ -149,23 +149,12 @@ struct PlayerBarView: View {
     }
 
     private func formatTime(isSeeking: Bool) -> String {
-        let time = playerService.currentTime
-        return Self.formatTime(time)
+        playerService.currentTime.formattedTime
     }
 
     private func formatRemainingTime() -> String {
         let remaining = playerService.duration - playerService.currentTime
-        return Self.formatTime(remaining, negative: true)
-    }
-
-    private static func formatTime(_ time: Double, negative: Bool = false) -> String {
-        guard time.isFinite && time >= 0 else { return negative ? "-0:00" : "0:00" }
-        let total = Int(time)
-        let prefix = negative ? "-" : ""
-        if total >= 3600 {
-            return String(format: "%@%d:%02d:%02d", prefix, total / 3600, (total % 3600) / 60, total % 60)
-        }
-        return String(format: "%@%d:%02d", prefix, total / 60, total % 60)
+        return remaining.formattedTime(negative: true)
     }
 
     private func trackInfo(_ track: SimpleTrack) -> some View {

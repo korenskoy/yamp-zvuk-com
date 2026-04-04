@@ -18,6 +18,7 @@ final class SearchViewModel {
     var isLoading = false
     var isQuickSearching = false
     var hasSearched = false
+    var appError: AppError?
 
     // Quick search (top tab)
     var topTracks: [SimpleTrack] = []
@@ -74,6 +75,8 @@ final class SearchViewModel {
 
         guard let client else { return }
 
+        appError = nil
+
         searchTask = Task {
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
@@ -96,6 +99,7 @@ final class SearchViewModel {
                 topPodcasts = result.podcasts
             } catch {
                 guard !Task.isCancelled else { return }
+                self.appError = AppError.from(error)
             }
         }
     }
@@ -118,6 +122,7 @@ final class SearchViewModel {
     private func loadFullSearch(client: ZvukClient?) {
         guard let client, !fullSearchLoaded else { return }
         categoryTask?.cancel()
+        appError = nil
 
         let searchQuery = lastQuery
         categoryTask = Task {
@@ -136,6 +141,7 @@ final class SearchViewModel {
                 fullSearchLoaded = true
             } catch {
                 guard !Task.isCancelled else { return }
+                self.appError = AppError.from(error)
             }
         }
     }

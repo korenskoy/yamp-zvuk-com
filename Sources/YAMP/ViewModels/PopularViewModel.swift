@@ -51,34 +51,37 @@ final class PopularViewModel {
             return
         }
 
-        var loadedSections: [PopularSectionData] = []
-
         let enabledSections = grid.sections.filter(\.enabled)
 
-        for (index, section) in enabledSections.enumerated() {
-            let sectionId = "\(index)"
-            do {
-                switch section.type {
-                case "listing":
-                    if let sectionData = try await loadListingSection(section, id: sectionId, cache: cache) {
-                        loadedSections.append(sectionData)
+        let results: [(Int, PopularSectionData?)] = await withTaskGroup(of: (Int, PopularSectionData?).self) { group in
+            for (index, section) in enabledSections.enumerated() {
+                let sectionId = "\(index)"
+                group.addTask {
+                    do {
+                        switch section.type {
+                        case "listing":
+                            return (index, try await self.loadListingSection(section, id: sectionId, cache: cache))
+                        case "content":
+                            return (index, try await self.loadContentSection(section, id: sectionId, cache: cache))
+                        default:
+                            return (index, nil)
+                        }
+                    } catch {
+                        // Сетевые ошибки логируются транспортным слоем клиента в LogStore
+                        return (index, nil)
                     }
-
-                case "content":
-                    if let sectionData = try await loadContentSection(section, id: sectionId, cache: cache) {
-                        loadedSections.append(sectionData)
-                    }
-
-                default:
-                    break
                 }
-            } catch {
-                // Сетевые ошибки логируются транспортным слоем клиента в LogStore
-                continue
             }
+            var collected: [(Int, PopularSectionData?)] = []
+            for await result in group {
+                collected.append(result)
+            }
+            return collected
         }
 
-        sections = loadedSections
+        sections = results
+            .sorted { $0.0 < $1.0 }
+            .compactMap(\.1)
     }
 
     // MARK: - Section Loading

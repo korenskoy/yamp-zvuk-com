@@ -26,11 +26,13 @@ final class NewsViewModel {
     var notifications: [ZvukNotification] = []
     var isLoading = false
     var isLoadingMore = false
+    var appError: AppError?
     var hasNextPage = false
     private var cursor: String?
 
     func load(client: ZvukClient?) async {
         guard let client else { return }
+        appError = nil
         isLoading = true
         defer { isLoading = false }
 
@@ -46,6 +48,7 @@ final class NewsViewModel {
             cursor = feed.pageInfo.cursor
             hasNextPage = feed.pageInfo.hasNextPage
         } catch {
+            self.appError = AppError.from(error)
             notifications = []
         }
     }
@@ -64,6 +67,8 @@ final class NewsViewModel {
             notifications.append(contentsOf: feed.notifications)
             self.cursor = feed.pageInfo.cursor
             hasNextPage = feed.pageInfo.hasNextPage
-        } catch {}
+        } catch {
+            self.appError = AppError.from(error)
+        }
     }
 }

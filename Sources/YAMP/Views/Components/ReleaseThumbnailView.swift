@@ -125,6 +125,8 @@ struct ReleaseThumbnailView: View {
             let releases = try await cacheService.getReleases([release.id])
             guard let full = releases.first, !full.tracks.isEmpty else { return }
             playerService.playQueue(full.tracks, context: .album(id: release.id))
-        } catch {}
+        } catch {
+            // Сетевые ошибки логируются транспортным слоем клиента в LogStore
+        }
     }
 }
