@@ -50,14 +50,14 @@ struct CoverSheetView: View {
                     if let imageURL, let url = URL(string: imageURL) {
                         CachedAsyncImage(url: url) { image in
                             image
-                                .aspectRatio(contentMode: .fit)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .aspectRatio(contentMode: .fill)
                         } placeholder: {
                             Color.clear
                         }
                     }
                 }
                 .aspectRatio(1, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
 
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -131,6 +131,7 @@ struct CoverSheetView: View {
                             Image(systemName: playerService.isPlaying ? "pause.fill" : "play.fill")
                                 .font(.title)
                                 .foregroundStyle(.primary)
+                                .frame(width: 24)
                         }
                         .buttonStyle(.plain)
                         .focusable(false)
