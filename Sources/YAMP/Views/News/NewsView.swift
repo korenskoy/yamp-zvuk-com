@@ -131,6 +131,13 @@ struct NewsView: View {
         return formatter
     }()
 
+    private static let dayYearFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "d MMMM, yyyy 'г'"
+        return formatter
+    }()
+
     private struct DateGroup {
         let label: String
         let items: [ZvukNotification]
@@ -139,6 +146,7 @@ struct NewsView: View {
     private func groupByDate(_ notifications: [ZvukNotification]) -> [DateGroup] {
         let calendar = Calendar.current
         let now = Date()
+        let currentYear = calendar.component(.year, from: now)
 
         var groups: [(label: String, items: [ZvukNotification])] = []
         var currentLabel = ""
@@ -154,8 +162,10 @@ struct NewsView: View {
                 label = "Сегодня"
             } else if calendar.isDateInYesterday(date) {
                 label = "Вчера"
-            } else {
+            } else if calendar.component(.year, from: date) == currentYear {
                 label = Self.dayFormatter.string(from: date)
+            } else {
+                label = Self.dayYearFormatter.string(from: date)
             }
 
             if label != currentLabel {

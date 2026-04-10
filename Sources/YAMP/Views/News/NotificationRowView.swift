@@ -7,6 +7,8 @@ struct NotificationRowView: View {
     @Environment(PlayerService.self) private var playerService
     @Environment(CacheService.self) private var cacheService
 
+    private static let coverSize: CGFloat = 80
+
     var body: some View {
         switch notification.body {
         case .newRelease(let author, let release):
@@ -44,21 +46,24 @@ struct NotificationRowView: View {
         HStack(spacing: 12) {
             PlayableCoverView(
                 src: release.image?.src,
-                size: 64,
+                size: Self.coverSize,
                 releaseId: release.id
             )
 
             VStack(alignment: .leading, spacing: 4) {
-                authorLabel(imageURL: author.image?.src, name: author.title)
+                Button { onNavigate(.artist(id: author.id)) } label: {
+                    authorLabel(imageURL: author.image?.src, name: author.title)
+                }
+                .buttonStyle(.plain)
+                .onHover { inside in
+                    if inside { NSCursor.pointingHand.set() } else { NSCursor.arrow.set() }
+                }
 
                 Text(release.title)
                     .font(.callout.weight(.medium))
                     .lineLimit(1)
 
-                Text(release.artists.map(\.title).joined(separator: ", "))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                artistsRow(release.artists)
 
                 if let type = release.type {
                     Text(releaseTypeName(type))
@@ -82,7 +87,7 @@ struct NotificationRowView: View {
 
     private func newEpisodeRow(episode: NotificationEpisode) -> some View {
         HStack(spacing: 12) {
-            coverImage(src: episode.image?.src, size: 64)
+            coverImage(src: episode.image?.src, size: Self.coverSize)
 
             VStack(alignment: .leading, spacing: 4) {
                 if let podcast = episode.podcast {
@@ -112,7 +117,7 @@ struct NotificationRowView: View {
 
     private func newBookRow(author: NotificationBookAuthor, book: NotificationBook) -> some View {
         HStack(spacing: 12) {
-            coverImage(src: book.image?.src, size: 64)
+            coverImage(src: book.image?.src, size: Self.coverSize)
 
             VStack(alignment: .leading, spacing: 4) {
                 authorLabel(imageURL: author.image?.src, name: author.rname)
@@ -139,7 +144,7 @@ struct NotificationRowView: View {
 
     private func playlistRow(author: NotificationProfileAuthor, playlist: NotificationPlaylist, subtitle: String) -> some View {
         HStack(spacing: 12) {
-            playlistCover(playlist: playlist, size: 64)
+            playlistCover(playlist: playlist, size: Self.coverSize)
 
             VStack(alignment: .leading, spacing: 4) {
                 authorLabel(imageURL: author.image?.src, name: author.name)
@@ -169,6 +174,30 @@ struct NotificationRowView: View {
     }
 
     // MARK: - Shared Components
+
+    private func artistsRow(_ artists: [NotificationArtistAuthor]) -> some View {
+        HStack(spacing: 0) {
+            ForEach(Array(artists.enumerated()), id: \.element.id) { index, artist in
+                if index > 0 {
+                    Text(", ")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Button {
+                    onNavigate(.artist(id: artist.id))
+                } label: {
+                    Text(artist.title)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .onHover { inside in
+                    if inside { NSCursor.pointingHand.set() } else { NSCursor.arrow.set() }
+                }
+            }
+        }
+        .lineLimit(1)
+    }
 
     private func authorLabel(imageURL: String?, name: String) -> some View {
         HStack(spacing: 6) {
@@ -246,10 +275,17 @@ struct NotificationRowView: View {
 
     private static let isoFallbackFormatter = ISO8601DateFormatter()
 
-    private static let relativeFormatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ru_RU")
-        formatter.unitsStyle = .abbreviated
+        formatter.dateFormat = "d MMMM"
+        return formatter
+    }()
+
+    private static let dayYearFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "d MMMM, yyyy 'г'"
         return formatter
     }()
 
@@ -257,7 +293,22 @@ struct NotificationRowView: View {
         guard let date = Self.isoFormatter.date(from: iso) ?? Self.isoFallbackFormatter.date(from: iso) else {
             return ""
         }
-        return Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
+        let now = Date()
+        let interval = now.timeIntervalSince(date)
+        if interval < 3600 {
+            let minutes = max(1, Int(interval / 60))
+            return "\(minutes) мин"
+        } else if interval < 86400 {
+            let hours = Int(interval / 3600)
+            return "\(hours) ч"
+        } else {
+            let calendar = Calendar.current
+            if calendar.component(.year, from: date) == calendar.component(.year, from: now) {
+                return Self.dayFormatter.string(from: date)
+            } else {
+                return Self.dayYearFormatter.string(from: date)
+            }
+        }
     }
 
     private func formatDuration(_ seconds: Int) -> String {
