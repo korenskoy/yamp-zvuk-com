@@ -122,6 +122,8 @@ struct ArtistHeaderView: View {
             }
             .buttonStyle(.plain)
             .help("Скрыть артиста")
+
+            ShareButton(target: .artist(id: artist.id))
         }
     }
 

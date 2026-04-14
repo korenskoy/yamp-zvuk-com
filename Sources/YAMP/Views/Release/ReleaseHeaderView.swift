@@ -76,6 +76,8 @@ struct ReleaseHeaderView: View {
                     }
                     .buttonStyle(.plain)
                     .help(isLiked ? "Убрать из коллекции" : "Добавить в коллекцию")
+
+                    ShareButton(target: .release(id: release.id))
                 }
             }
 

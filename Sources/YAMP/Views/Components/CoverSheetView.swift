@@ -159,6 +159,8 @@ struct CoverSheetView: View {
                         .buttonStyle(.plain)
                         .focusable(false)
                         .help("Нравится")
+
+                        ShareButton(target: .track(id: track.id))
                     }
                 }
             }

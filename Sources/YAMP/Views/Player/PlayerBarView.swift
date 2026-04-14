@@ -70,6 +70,11 @@ struct PlayerBarView: View {
                         .buttonStyle(.plain)
                         .help("Радио по треку")
 
+                        ShareButton(
+                            target: playerService.currentTrack.map { .track(id: $0.id) },
+                            font: .callout
+                        )
+
                         if lastFMService.isConnected && appSettings.isScrobblingEnabled {
                             Button {
                                 if let username = lastFMService.connectedUsername {

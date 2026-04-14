@@ -112,6 +112,8 @@ struct PlaylistHeaderView: View {
                 .buttonStyle(.plain)
                 .help("Удалить")
             }
+
+            ShareButton(target: .playlist(id: playlist.id))
         }
     }
 }

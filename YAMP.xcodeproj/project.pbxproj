@@ -35,6 +35,7 @@
 		60D015CD3B35888F3C56E77F /* NewsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 569D8A64079EFF09E2D44FFA /* NewsViewModel.swift */; };
 		60D1F6FAE69B4187DF94C211 /* TrackRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE32548E4889DC8C558A7E49 /* TrackRowView.swift */; };
 		614091B68832358D660E04C2 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E1A7AB954EB56F263E82610 /* SearchView.swift */; };
+		62544D94B0959C434AE23C90 /* ShareService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78723D55A2005FB3276E30B /* ShareService.swift */; };
 		663B6563C8C4FF48782F0284 /* YAMPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A8F0B503AC6BE673A5D313 /* YAMPApp.swift */; };
 		6A2876301207DC475B3E7FED /* CacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07A84F1FE19270FF253A92D /* CacheService.swift */; };
 		72357F0F14DB98ED3DE922D7 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494ECEE3C86B74822C4B0F96 /* GeneratedCoverView.swift */; };
@@ -75,6 +76,7 @@
 		D6AD32ED70DFE71FABD85695 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA72B33F418F6D475979EA8 /* SplashView.swift */; };
 		DAA1819A461CE06D720D9FAC /* MouseNavigationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596C1D28E5A73986ECEB6E60 /* MouseNavigationHandler.swift */; };
 		DC6A10DB69FEB879B26288DD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99C18F3A1797C7E8884E4DE /* SettingsView.swift */; };
+		DCEB34A1B9E52DA33D071D5C /* ShareButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FE72ECC7B30A9611D7DD344 /* ShareButton.swift */; };
 		DCF038526DF75FA1A8566BB3 /* ArtistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 212C38DE20EAA0C75D37FEF7 /* ArtistView.swift */; };
 		DFFF0073A1060528E4B4B3DF /* WavePopularitySlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 243611013A8BEE2BB7E4E9C2 /* WavePopularitySlider.swift */; };
 		E4CF95B3DCAC9752485CFAB5 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63225135BEF4CFFB591CC6AC /* HomeView.swift */; };
@@ -98,6 +100,7 @@
 		17B3368D367E2D7AF9CE5E19 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		1CCAA2668B562C5E0A632A7D /* AccentButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccentButtonStyle.swift; sourceTree = "<group>"; };
 		1FC8BAB9EB06A8A5A45D7897 /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
+		1FE72ECC7B30A9611D7DD344 /* ShareButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareButton.swift; sourceTree = "<group>"; };
 		212C38DE20EAA0C75D37FEF7 /* ArtistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistView.swift; sourceTree = "<group>"; };
 		2145120D6782F1BF1B6D9DB7 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		243611013A8BEE2BB7E4E9C2 /* WavePopularitySlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WavePopularitySlider.swift; sourceTree = "<group>"; };
@@ -160,6 +163,7 @@
 		DC865906B2B020FDFA5AEC0D /* LogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogStore.swift; sourceTree = "<group>"; };
 		DCA72B33F418F6D475979EA8 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		E74C084EF3AFD02B8FEA5D3D /* NavigationDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationDestination.swift; sourceTree = "<group>"; };
+		E78723D55A2005FB3276E30B /* ShareService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareService.swift; sourceTree = "<group>"; };
 		ED74DB6FAC4C1E6BA873C19D /* ImageCacheService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheService.swift; sourceTree = "<group>"; };
 		EDBBFF811A69381BAABDB4A3 /* LastFMIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastFMIcon.swift; sourceTree = "<group>"; };
 		F2C60BFF30937DE7F75C9FD3 /* CollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };
@@ -212,6 +216,7 @@
 				DC865906B2B020FDFA5AEC0D /* LogStore.swift */,
 				F886F62245B413BCDC096C85 /* LyricsService.swift */,
 				86C6C1F98E1052E56C92F371 /* PlayerService.swift */,
+				E78723D55A2005FB3276E30B /* ShareService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -430,6 +435,7 @@
 				AA3F8F0D71533667208D1C53 /* PlayableCoverView.swift */,
 				16D5A9F053C117182322E985 /* RecommendedPlaylistCardView.swift */,
 				9CBDA26B00B35C2C7CBFCA53 /* ReleaseThumbnailView.swift */,
+				1FE72ECC7B30A9611D7DD344 /* ShareButton.swift */,
 				BE32548E4889DC8C558A7E49 /* TrackRowView.swift */,
 			);
 			path = Components;
@@ -609,6 +615,8 @@
 				614091B68832358D660E04C2 /* SearchView.swift in Sources */,
 				1E683522C0A15E1D1852D958 /* SearchViewModel.swift in Sources */,
 				DC6A10DB69FEB879B26288DD /* SettingsView.swift in Sources */,
+				DCEB34A1B9E52DA33D071D5C /* ShareButton.swift in Sources */,
+				62544D94B0959C434AE23C90 /* ShareService.swift in Sources */,
 				7E3AFBE05893042F4A443E0E /* SidebarView.swift in Sources */,
 				D6AD32ED70DFE71FABD85695 /* SplashView.swift in Sources */,
 				BB68634FC902E39C18D2FAA3 /* TimeInterval+Format.swift in Sources */,
@@ -633,13 +641,13 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 122;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.2.3;
+				MARKETING_VERSION = 1.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "ru.korenskoy.zvuk-unofficial";
 				PRODUCT_NAME = YAMP;
 				SDKROOT = macosx;
@@ -773,13 +781,13 @@
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 122;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.2.3;
+				MARKETING_VERSION = 1.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "ru.korenskoy.zvuk-unofficial";
 				PRODUCT_NAME = YAMP;
 				SDKROOT = macosx;
