@@ -1,5 +1,5 @@
 {
-  "originHash" : "9d1d3f21d2446210a54384f50f0da04125c6f26c79a25c9cbc1a487dd269a729",
+  "originHash" : "ab0bcb56bc71bb28a5d685cd3349a87300e533659504d09214345b9794c6bc2e",
   "pins" : [
     {
       "identity" : "collectionconcurrencykit",
@@ -114,8 +114,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/korenskoy/zvuk-swift.git",
       "state" : {
-        "revision" : "f752b446d7175d8c2d7d673fd4913f112b23fd3c",
-        "version" : "0.2.0"
+        "revision" : "d592fffdc0c43fcefeecbef5d10e6d26fc47966a",
+        "version" : "0.3.0"
       }
     }
   ],

@@ -9,7 +9,7 @@ This file provides guidance to Claude Code when working with the yamp-zvuk codeb
 - **Platform**: macOS 15+, Swift 6
 - **UI Framework**: SwiftUI with `@Observable` pattern
 - **Bundle ID**: `ru.korenskoy.zvuk-unofficial`
-- **API**: GraphQL + REST via `ZvukMusic` Swift package (`../zvuk-swift`, v0.2.0+)
+- **API**: GraphQL + REST via `ZvukMusic` Swift package (`../zvuk-swift`, v0.3.0+)
 
 ## Build Commands
 

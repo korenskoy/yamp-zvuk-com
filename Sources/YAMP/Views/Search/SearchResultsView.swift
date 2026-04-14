@@ -39,6 +39,8 @@ struct SearchResultsView: View {
                 case .podcasts:
                     podcastsAdaptiveGrid(viewModel.podcasts)
                 }
+
+                loadMoreFooter
             }
             .padding(20)
         }
@@ -308,6 +310,28 @@ struct SearchResultsView: View {
         .frame(width: size, height: size)
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    // MARK: - Load more footer
+
+    @ViewBuilder
+    private var loadMoreFooter: some View {
+        if viewModel.canLoadMore {
+            HStack {
+                Spacer()
+                if viewModel.isLoadingMore {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Button("Загрузить ещё") {
+                        viewModel.loadMore(client: appState.client)
+                    }
+                    .font(.callout)
+                }
+                Spacer()
+            }
+            .padding(.vertical, 8)
+        }
     }
 
     // MARK: - Section helper

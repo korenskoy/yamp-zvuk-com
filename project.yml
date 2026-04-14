@@ -10,7 +10,7 @@ options:
 packages:
   ZvukMusic:
     url: https://github.com/korenskoy/zvuk-swift.git
-    from: "0.2.0"
+    from: "0.3.0"
   LastFM.swift:
     url: https://github.com/duhnnie/LastFM.swift
     from: "1.6.1"
@@ -27,8 +27,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ru.korenskoy.zvuk-unofficial
         PRODUCT_NAME: YAMP
-        MARKETING_VERSION: "1.2.2"
-        CURRENT_PROJECT_VERSION: "113"
+        MARKETING_VERSION: "1.2.3"
+        CURRENT_PROJECT_VERSION: "117"
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "15.0"
         INFOPLIST_FILE: Info.plist

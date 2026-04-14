@@ -15,7 +15,6 @@ enum SearchTab: String, CaseIterable {
 final class SearchViewModel {
     var query = ""
     var selectedTab: SearchTab = .top
-    var isLoading = false
     var isQuickSearching = false
     var hasSearched = false
     var appError: AppError?
@@ -27,17 +26,29 @@ final class SearchViewModel {
     var topPlaylists: [SimplePlaylist] = []
     var topPodcasts: [SimplePodcast] = []
 
-    // Full search (category tabs) — loaded lazily
+    // Category tabs — loaded lazily per tab
     var tracks: [SimpleTrack] = []
     var artists: [SimpleArtist] = []
     var releases: [SimpleRelease] = []
     var playlists: [SimplePlaylist] = []
     var podcasts: [SimplePodcast] = []
 
+    // Per-tab loading / pagination state
+    var loadingTab: SearchTab?
+    private var tracksCursor: String?
+    private var artistsCursor: String?
+    private var releasesCursor: String?
+    private var playlistsCursor: String?
+    private var podcastsCursor: String?
+    private var loadedTabs: Set<SearchTab> = []
+    private var loadingMoreTabs: Set<SearchTab> = []
+
+    private let pageSize = 30
+
     private var searchTask: Task<Void, Never>?
     private var categoryTask: Task<Void, Never>?
+    private var loadMoreTask: Task<Void, Never>?
     private var lastQuery = ""
-    private var fullSearchLoaded = false
 
     var autocompleteSuggestion: String? {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -63,6 +74,29 @@ final class SearchViewModel {
         }
     }
 
+    /// Whether the current tab is loading its first page.
+    var isLoading: Bool {
+        loadingTab == selectedTab
+    }
+
+    /// Whether the current tab can load more results.
+    var canLoadMore: Bool {
+        guard loadedTabs.contains(selectedTab) else { return false }
+        switch selectedTab {
+        case .top: return false
+        case .tracks: return tracksCursor != nil
+        case .artists: return artistsCursor != nil
+        case .releases: return releasesCursor != nil
+        case .playlists: return playlistsCursor != nil
+        case .podcasts: return podcastsCursor != nil
+        }
+    }
+
+    /// Whether the current tab is currently paginating.
+    var isLoadingMore: Bool {
+        loadingMoreTabs.contains(selectedTab)
+    }
+
     func onQueryChanged(client: ZvukClient?) {
         searchTask?.cancel()
         categoryTask?.cancel()
@@ -85,8 +119,7 @@ final class SearchViewModel {
             defer { isQuickSearching = false }
 
             lastQuery = trimmed
-            fullSearchLoaded = false
-            clearCategoryResults()
+            resetCategoryState()
 
             do {
                 let result = try await client.quickSearch(trimmed, limit: 20)
@@ -109,38 +142,33 @@ final class SearchViewModel {
         guard trimmed.count >= 2 else { return }
         hasSearched = true
         if selectedTab != .top {
-            loadFullSearch(client: client)
+            loadCurrentTab(client: client)
         }
     }
 
     func onTabChanged(client: ZvukClient?) {
-        if selectedTab != .top && !fullSearchLoaded && hasSearched {
-            loadFullSearch(client: client)
-        }
+        guard hasSearched, selectedTab != .top else { return }
+        guard !loadedTabs.contains(selectedTab) else { return }
+        loadCurrentTab(client: client)
     }
 
-    private func loadFullSearch(client: ZvukClient?) {
-        guard let client, !fullSearchLoaded else { return }
-        categoryTask?.cancel()
-        appError = nil
+    func loadMore(client: ZvukClient?) {
+        guard let client, hasSearched, selectedTab != .top else { return }
+        guard loadedTabs.contains(selectedTab) else { return }
+        guard !loadingMoreTabs.contains(selectedTab) else { return }
+        guard canLoadMore else { return }
 
+        let tab = selectedTab
         let searchQuery = lastQuery
-        categoryTask = Task {
-            isLoading = true
-            defer { isLoading = false }
+        loadingMoreTabs.insert(tab)
 
+        loadMoreTask = Task {
+            defer { loadingMoreTabs.remove(tab) }
             do {
-                let result = try await client.search(searchQuery, limit: 30)
-                guard !Task.isCancelled else { return }
-
-                tracks = result.tracks?.items ?? []
-                artists = result.artists?.items ?? []
-                releases = result.releases?.items ?? []
-                playlists = result.playlists?.items ?? []
-                podcasts = result.podcasts?.items ?? []
-                fullSearchLoaded = true
+                try await fetchTab(tab, query: searchQuery, client: client, append: true)
+            } catch is CancellationError {
+                return
             } catch {
-                guard !Task.isCancelled else { return }
                 self.appError = AppError.from(error)
             }
         }
@@ -149,14 +177,84 @@ final class SearchViewModel {
     func clearResults() {
         topTracks = []; topArtists = []; topReleases = []
         topPlaylists = []; topPodcasts = []
-        clearCategoryResults()
+        resetCategoryState()
         hasSearched = false
-        fullSearchLoaded = false
         lastQuery = ""
     }
 
-    private func clearCategoryResults() {
+    // MARK: - Private
+
+    private func resetCategoryState() {
+        loadMoreTask?.cancel()
+        loadMoreTask = nil
         tracks = []; artists = []; releases = []
         playlists = []; podcasts = []
+        tracksCursor = nil; artistsCursor = nil; releasesCursor = nil
+        playlistsCursor = nil; podcastsCursor = nil
+        loadedTabs.removeAll()
+        loadingMoreTabs.removeAll()
+        loadingTab = nil
+    }
+
+    private func loadCurrentTab(client: ZvukClient?) {
+        guard let client else { return }
+        categoryTask?.cancel()
+        appError = nil
+
+        let tab = selectedTab
+        let searchQuery = lastQuery
+        categoryTask = Task {
+            loadingTab = tab
+            defer {
+                if loadingTab == tab { loadingTab = nil }
+            }
+
+            do {
+                try await fetchTab(tab, query: searchQuery, client: client, append: false)
+            } catch is CancellationError {
+                return
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.appError = AppError.from(error)
+            }
+        }
+    }
+
+    private func fetchTab(_ tab: SearchTab, query searchQuery: String, client: ZvukClient, append: Bool) async throws {
+        switch tab {
+        case .top:
+            return
+        case .tracks:
+            let cursor = append ? tracksCursor : nil
+            let page = try await client.searchTracks(searchQuery, limit: pageSize, cursor: cursor)
+            try Task.checkCancellation()
+            tracks = append ? tracks + page.items : page.items
+            tracksCursor = page.page?.cursor
+        case .artists:
+            let cursor = append ? artistsCursor : nil
+            let page = try await client.searchArtists(searchQuery, limit: pageSize, cursor: cursor)
+            try Task.checkCancellation()
+            artists = append ? artists + page.items : page.items
+            artistsCursor = page.page?.cursor
+        case .releases:
+            let cursor = append ? releasesCursor : nil
+            let page = try await client.searchReleases(searchQuery, limit: pageSize, cursor: cursor)
+            try Task.checkCancellation()
+            releases = append ? releases + page.items : page.items
+            releasesCursor = page.page?.cursor
+        case .playlists:
+            let cursor = append ? playlistsCursor : nil
+            let page = try await client.searchPlaylists(searchQuery, limit: pageSize, cursor: cursor)
+            try Task.checkCancellation()
+            playlists = append ? playlists + page.items : page.items
+            playlistsCursor = page.page?.cursor
+        case .podcasts:
+            let cursor = append ? podcastsCursor : nil
+            let page = try await client.searchPodcasts(searchQuery, limit: pageSize, cursor: cursor)
+            try Task.checkCancellation()
+            podcasts = append ? podcasts + page.items : page.items
+            podcastsCursor = page.page?.cursor
+        }
+        loadedTabs.insert(tab)
     }
 }
