@@ -67,8 +67,25 @@ final class AppState {
             self.client = ZvukClient(token: token, rateLimit: 5)
             self.currentUser = profile
             self.isAuthenticated = true
+        } catch is URLError {
+            // Network unreachable — keep token, authenticate optimistically
+            self.client = ZvukClient(token: token, rateLimit: 5)
+            self.isAuthenticated = true
+        } catch let error as ZvukError {
+            switch error {
+            case .unauthorized:
+                authService.clearToken()
+            case .network, .timedOut:
+                // Transient network error — keep token, authenticate optimistically
+                self.client = ZvukClient(token: token, rateLimit: 5)
+                self.isAuthenticated = true
+            default:
+                // Other API errors — keep token but don't authenticate
+                break
+            }
         } catch {
-            authService.clearToken()
+            // Unknown error — keep token, don't clear
+            print("[AppState] Session restore failed: \(error)")
         }
     }
 
