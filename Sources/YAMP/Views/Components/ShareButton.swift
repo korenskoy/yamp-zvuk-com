@@ -11,7 +11,7 @@ struct ShareButton: View {
                 .font(font)
                 .foregroundStyle(iconColor)
                 .contentTransition(.symbolEffect(.replace))
-                .offset(y: copied ? 0 : -2)
+                .offset(y: copied ? 0 : -1)
                 .frame(width: 24, height: 24)
         }
         .buttonStyle(.plain)

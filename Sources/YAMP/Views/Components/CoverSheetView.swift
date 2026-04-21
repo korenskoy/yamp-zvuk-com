@@ -96,6 +96,8 @@ struct CoverSheetView: View {
                 if isCurrentTrack, let track = playerService.currentTrack {
                     let isLiked = collectionService.isTrackLiked(track.id)
                     HStack(spacing: 16) {
+                        ShareButton(target: .track(id: track.id))
+
                         Button {
                             Task {
                                 _ = try? await appState.client?.hideTrack(track.id)
@@ -109,6 +111,19 @@ struct CoverSheetView: View {
                         .buttonStyle(.plain)
                         .focusable(false)
                         .help("Не нравится")
+
+                        Button {
+                            Task {
+                                await collectionService.toggleTrackLike(track, client: appState.client)
+                            }
+                        } label: {
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
+                                .font(.title2)
+                                .foregroundStyle(isLiked ? .red : .secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .focusable(false)
+                        .help("Нравится")
 
                         Button {
                             playerService.previous()
@@ -146,21 +161,6 @@ struct CoverSheetView: View {
                         .buttonStyle(.plain)
                         .focusable(false)
                         .disabled(!playerService.hasNext)
-
-                        Button {
-                            Task {
-                                await collectionService.toggleTrackLike(track, client: appState.client)
-                            }
-                        } label: {
-                            Image(systemName: isLiked ? "heart.fill" : "heart")
-                                .font(.title2)
-                                .foregroundStyle(isLiked ? .red : .secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .focusable(false)
-                        .help("Нравится")
-
-                        ShareButton(target: .track(id: track.id))
                     }
                 }
             }
