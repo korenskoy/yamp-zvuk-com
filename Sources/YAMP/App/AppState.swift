@@ -51,6 +51,8 @@ final class AppState {
 
     private(set) var client: ZvukClient?
     private let authService = AuthService()
+    private var newsPollingTask: Task<Void, Never>?
+    private static let newsPollingInterval: Duration = .seconds(6 * 60 * 60)
 
     func restoreSession() async {
         guard !isAuthenticated else { return }
@@ -95,13 +97,17 @@ final class AppState {
         self.client = ZvukClient(token: token, rateLimit: 5)
         self.currentUser = profile
         self.isAuthenticated = true
+        await checkUnreadNews()
+        startNewsPolling()
     }
 
     func logout() {
+        stopNewsPolling()
         authService.clearToken()
         self.client = nil
         self.currentUser = nil
         self.isAuthenticated = false
+        self.hasUnreadNews = false
         self.selectedDestination = .search
     }
 
@@ -110,6 +116,22 @@ final class AppState {
     func checkUnreadNews() async {
         guard let client else { return }
         hasUnreadNews = (try? await client.hasUnreadNotifications()) ?? false
+    }
+
+    func startNewsPolling() {
+        newsPollingTask?.cancel()
+        newsPollingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: Self.newsPollingInterval)
+                guard !Task.isCancelled else { return }
+                await self?.checkUnreadNews()
+            }
+        }
+    }
+
+    func stopNewsPolling() {
+        newsPollingTask?.cancel()
+        newsPollingTask = nil
     }
 
     // MARK: - Destination Persistence

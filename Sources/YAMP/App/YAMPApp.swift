@@ -53,6 +53,7 @@ struct YAMPApp: App {
                 if appState.isAuthenticated {
                     await collectionService.loadCollection(client: appState.client)
                     await appState.checkUnreadNews()
+                    appState.startNewsPolling()
                 }
             }
         }
