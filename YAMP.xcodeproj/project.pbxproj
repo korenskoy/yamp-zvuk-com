@@ -157,6 +157,7 @@
 		C3C614A5277FAAF78580F4BC /* NotificationRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationRowView.swift; sourceTree = "<group>"; };
 		C812FBCA52C160393A061AC7 /* CollectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionService.swift; sourceTree = "<group>"; };
 		CD1319691BAA854CAADDD955 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		CD3F4E6417C4A391E1B51057 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		CEBCD061599B057B465F278E /* WaveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveView.swift; sourceTree = "<group>"; };
 		D8877EC1337B280C47D7479C /* PlayerControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerControlsView.swift; sourceTree = "<group>"; };
 		D99C18F3A1797C7E8884E4DE /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -299,6 +300,7 @@
 		866AAD50021E1F4846B645D9 = {
 			isa = PBXGroup;
 			children = (
+				B81525C4EF76AACD3CC2393E /* Configuration */,
 				888649CCF71C7BB0D570CFE2 /* YAMP */,
 				5F57903DBFEA1E168A41A943 /* Products */,
 			);
@@ -364,6 +366,14 @@
 				4F914138FB7227AED3F10B27 /* WaveViewModel.swift */,
 			);
 			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		B81525C4EF76AACD3CC2393E /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				CD3F4E6417C4A391E1B51057 /* Version.xcconfig */,
+			);
+			path = Configuration;
 			sourceTree = "<group>";
 		};
 		C01E939332EBF0CBC6B13805 /* Collection */ = {
@@ -636,18 +646,17 @@
 /* Begin XCBuildConfiguration section */
 		2924A8C85417C4BE25F6BD63 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CD3F4E6417C4A391E1B51057 /* Version.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 126;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "ru.korenskoy.zvuk-unofficial";
 				PRODUCT_NAME = YAMP;
 				SDKROOT = macosx;
@@ -776,18 +785,17 @@
 		};
 		BB1C94967A1CD7CF1E96B6E0 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CD3F4E6417C4A391E1B51057 /* Version.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = YAMP.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 126;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "ru.korenskoy.zvuk-unofficial";
 				PRODUCT_NAME = YAMP;
 				SDKROOT = macosx;

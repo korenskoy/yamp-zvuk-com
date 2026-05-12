@@ -23,12 +23,13 @@ targets:
       - path: Sources/YAMP
     resources:
       - path: Sources/YAMP/Resources
+    configFiles:
+      Debug: Configuration/Version.xcconfig
+      Release: Configuration/Version.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ru.korenskoy.zvuk-unofficial
         PRODUCT_NAME: YAMP
-        MARKETING_VERSION: "1.2.4"
-        CURRENT_PROJECT_VERSION: "126"
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "15.0"
         INFOPLIST_FILE: Info.plist

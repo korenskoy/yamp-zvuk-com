@@ -10,10 +10,11 @@ DMG_NAME="Zvuk-unofficial"
 cd "$(dirname "$0")/.."
 
 # ── Bump build number ────────────────────────────────────────────────────────
-CURRENT_BUILD=$(grep 'CURRENT_PROJECT_VERSION:' project.yml | head -1 | sed 's/.*"\(.*\)"/\1/')
+VERSION_FILE="Configuration/Version.xcconfig"
+CURRENT_BUILD=$(grep '^CURRENT_PROJECT_VERSION' "$VERSION_FILE" | sed 's/.*=[[:space:]]*//')
 NEW_BUILD=$((CURRENT_BUILD + 1))
 echo "==> Bumping build: $CURRENT_BUILD → $NEW_BUILD"
-sed -i '' "s/CURRENT_PROJECT_VERSION: \"$CURRENT_BUILD\"/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
+sed -i '' "s/^CURRENT_PROJECT_VERSION = $CURRENT_BUILD\$/CURRENT_PROJECT_VERSION = $NEW_BUILD/" "$VERSION_FILE"
 
 echo "==> Regenerating Xcode project..."
 xcodegen generate >/dev/null

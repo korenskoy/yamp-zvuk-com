@@ -3,13 +3,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# ── Extract version from project.yml ─────────────────────────────────────────
-VERSION=$(grep 'MARKETING_VERSION:' project.yml | head -1 | sed 's/.*"\(.*\)"/\1/')
+# ── Extract version from Configuration/Version.xcconfig ──────────────────────
+VERSION=$(grep '^MARKETING_VERSION' Configuration/Version.xcconfig | sed 's/.*=[[:space:]]*//')
 TAG="v$VERSION"
 DMG_NAME="Zvuk-unofficial-${VERSION}.dmg"
 
 if [ -z "$VERSION" ]; then
-    echo "Error: could not extract MARKETING_VERSION from project.yml"
+    echo "Error: could not extract MARKETING_VERSION from Configuration/Version.xcconfig"
     exit 1
 fi
 
