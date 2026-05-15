@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#070b08" />
+<title>Zvuk [unofficial] — десктопный клиент для macOS</title>
+<meta name="description" content="Неофициальный десктопный клиент Zvuk.com для macOS. Волна, скробблинг в Last.fm, тексты песен, история прослушиваний." />
+<meta property="og:title" content="Zvuk [unofficial] — десктопный клиент для macOS" />
+<meta property="og:description" content="Неофициальный десктопный клиент Zvuk.com для macOS. SwiftUI, нативный, открытый исходный код." />
+<meta property="og:image" content="screenshot.webp" />
+<meta property="og:type" content="website" />
+<link rel="icon" type="image/png" href="icon.png" />
+<link rel="apple-touch-icon" href="icon.png" />
+<style>
+  :root {
+    --bg: #060a07;
+    --bg-2: #08110b;
+    --text: #e8f5ed;
+    --text-dim: #9eb6a8;
+    --text-muted: #6a8478;
+    --accent-1: #37dd6f;
+    --accent-2: #0fb04d;
+    --accent-3: #74f7a4;
+    --glass: rgba(255, 255, 255, 0.045);
+    --glass-strong: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --radius: 18px;
+    --shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+      "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    position: relative;
+    background:
+      radial-gradient(1100px 700px at 12% -10%, rgba(55, 221, 111, 0.32), transparent 60%),
+      radial-gradient(900px 600px at 95% 5%, rgba(15, 176, 77, 0.30), transparent 60%),
+      radial-gradient(900px 600px at 50% 110%, rgba(116, 247, 164, 0.14), transparent 60%),
+      linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 50%, var(--bg-2) 100%);
+    background-attachment: fixed;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 3px 3px;
+    opacity: 0.6;
+    mix-blend-mode: overlay;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .container {
+    width: min(1180px, 92vw);
+    margin: 0 auto;
+  }
+
+  /* ───────── NAV ───────── */
+  nav.top {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    background: rgba(6, 10, 7, 0.6);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav.top .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .logo .mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px -8px rgba(55, 221, 111, 0.55);
+  }
+
+  .logo .mark img { width: 100%; height: 100%; display: block; }
+
+  .logo .name {
+    font-size: 15px;
+  }
+
+  .logo .name small {
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-left: 4px;
+  }
+
+  nav.top .links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  nav.top .links a {
+    padding: 8px 14px;
+    border-radius: 999px;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  nav.top .links a:hover {
+    color: var(--text);
+    background: var(--glass);
+  }
+
+  nav.top .links a.cta {
+    background: var(--glass-strong);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+  }
+
+  nav.top .links a.cta:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  /* ───────── HERO ───────── */
+  .hero {
+    padding: 72px 0 60px;
+    text-align: center;
+    position: relative;
+  }
+
+  .hero-icon {
+    width: 112px;
+    height: 112px;
+    margin: 0 auto 28px;
+    border-radius: 26px;
+    overflow: hidden;
+    box-shadow:
+      0 30px 60px -18px rgba(15, 176, 77, 0.5),
+      0 12px 32px -10px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateZ(0);
+    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .hero-icon:hover { transform: scale(1.04) rotate(-2deg); }
+
+  .hero-icon img {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 500;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-1);
+    box-shadow: 0 0 12px var(--accent-1);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1.hero-title {
+    font-size: clamp(44px, 8vw, 88px);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+    margin: 22px 0 18px;
+  }
+
+  h1.hero-title .grad {
+    background: linear-gradient(135deg, #ffffff 0%, #c8f7d6 25%, #37dd6f 55%, #0fb04d 90%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .hero-sub {
+    font-size: clamp(16px, 1.6vw, 19px);
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0 auto 32px;
+  }
+
+  .cta-row {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.005em;
+    border: 1px solid transparent;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease,
+      border-color 0.2s ease;
+    cursor: pointer;
+  }
+
+  .btn:active { transform: translateY(1px); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    color: #032611;
+    box-shadow:
+      0 14px 30px -8px rgba(55, 221, 111, 0.55),
+      0 6px 16px -8px rgba(15, 176, 77, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+
+  .btn-primary:hover {
+    box-shadow:
+      0 18px 40px -8px rgba(55, 221, 111, 0.7),
+      0 10px 24px -8px rgba(15, 176, 77, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  .btn-ghost {
+    background: var(--glass);
+    border-color: var(--border-strong);
+    color: var(--text);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .btn-ghost:hover {
+    background: var(--glass-strong);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+
+  .btn svg { width: 18px; height: 18px; }
+
+  .hero-meta {
+    margin-top: 18px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* ───────── SCREENSHOT ───────── */
+  .shot-wrap {
+    margin: 64px auto 0;
+    width: min(1100px, 96vw);
+    position: relative;
+  }
+
+  .shot-wrap::before {
+    content: "";
+    position: absolute;
+    inset: -60px -40px auto -40px;
+    height: 70%;
+    background: radial-gradient(closest-side, rgba(55, 221, 111, 0.32), transparent 70%),
+      radial-gradient(closest-side, rgba(15, 176, 77, 0.36) 0%, transparent 70%);
+    filter: blur(60px);
+    z-index: -1;
+    opacity: 0.85;
+  }
+
+  .shot {
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow:
+      0 60px 120px -30px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  .shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ───────── SECTIONS ───────── */
+  section {
+    padding: 110px 0;
+    position: relative;
+  }
+
+  .section-head {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .section-eyebrow {
+    color: var(--accent-1);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .section-title {
+    font-size: clamp(32px, 4vw, 48px);
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    font-weight: 700;
+    margin: 10px 0 14px;
+  }
+
+  .section-desc {
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto;
+    font-size: 17px;
+  }
+
+  /* ───────── FEATURES ───────── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .feature {
+    position: relative;
+    padding: 28px 26px 26px;
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    overflow: hidden;
+  }
+
+  .feature::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 50%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .feature:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-strong);
+    background: var(--glass-strong);
+  }
+
+  .feature .icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(55, 221, 111, 0.22), rgba(15, 176, 77, 0.18));
+    border: 1px solid rgba(116, 247, 164, 0.18);
+    display: grid;
+    place-items: center;
+    margin-bottom: 18px;
+    color: #b6f5cb;
+  }
+
+  .feature .icon svg { width: 20px; height: 20px; }
+
+  .feature h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .feature p {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+
+  /* ───────── REQUIREMENTS ───────── */
+  .req-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .req-grid { grid-template-columns: 1fr; }
+  }
+
+  .req-card {
+    padding: 32px;
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+  }
+
+  .req-card h3 {
+    margin: 0 0 18px;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .req-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .req-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+
+  .req-list li svg {
+    width: 18px;
+    height: 18px;
+    color: var(--accent-1);
+    flex-shrink: 0;
+  }
+
+  .req-card.tip {
+    background: linear-gradient(135deg, rgba(55, 221, 111, 0.10), rgba(15, 176, 77, 0.10));
+    border-color: rgba(55, 221, 111, 0.28);
+  }
+
+  .req-card.tip code {
+    display: block;
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 13px;
+    color: #b6f5cb;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* ───────── DISCLAIMER ───────── */
+  .disclaimer {
+    padding: 36px;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 14.5px;
+    line-height: 1.65;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .disclaimer strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ───────── FOOTER ───────── */
+  footer {
+    padding: 50px 0 70px;
+    border-top: 1px solid var(--border);
+    margin-top: 30px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  footer .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  footer a:hover { color: var(--text); }
+
+  footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+  /* ───────── MOBILE ───────── */
+  @media (max-width: 640px) {
+    .hero { padding: 56px 0 40px; }
+    section { padding: 70px 0; }
+    nav.top .links a:not(.cta) { display: none; }
+    .shot-wrap { margin-top: 40px; }
+    .feature { padding: 22px 20px; }
+  }
+
+  /* ───────── ANIMATIONS ───────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal { animation: fadeUp 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .reveal-2 { animation-delay: 0.1s; }
+  .reveal-3 { animation-delay: 0.2s; }
+  .reveal-4 { animation-delay: 0.3s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="container row">
+    <a class="logo" href="#">
+      <span class="mark"><img src="icon.png" alt="" /></span>
+      <span class="name">Zvuk <small>[unofficial]</small></span>
+    </a>
+    <div class="links">
+      <a href="#features">Возможности</a>
+      <a href="#requirements">Установка</a>
+      <a class="cta" href="https://github.com/korenskoy/yamp-zvuk-com" target="_blank" rel="noopener">
+        GitHub →
+      </a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-icon reveal">
+      <img src="icon.png" alt="Иконка Zvuk [unofficial]" />
+    </div>
+
+    <span class="pill reveal reveal-2">
+      <span class="dot"></span>
+      Нативный клиент для macOS · SwiftUI
+    </span>
+
+    <h1 class="hero-title reveal reveal-3">
+      Звук, который<br/>
+      <span class="grad">звучит нативно.</span>
+    </h1>
+
+    <p class="hero-sub reveal reveal-3">
+      Неофициальный десктопный клиент <a href="https://zvuk.com" target="_blank" rel="noopener" style="color: var(--text); text-decoration: underline; text-decoration-color: rgba(255,255,255,0.25);">Zvuk.com</a> для macOS.
+      Волна, Last.fm, тексты песен, история — всё в одном лёгком приложении.
+    </p>
+
+    <div class="cta-row reveal reveal-3">
+      <a class="btn btn-primary"
+         href="https://github.com/korenskoy/yamp-zvuk-com/releases/latest"
+         target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Скачать DMG
+      </a>
+      <a class="btn btn-ghost"
+         href="https://github.com/korenskoy/yamp-zvuk-com"
+         target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.05 11.05 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.41.36.78 1.06.78 2.14 0 1.55-.01 2.79-.01 3.17 0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
+        </svg>
+        Исходный код
+      </a>
+    </div>
+
+    <p class="hero-meta reveal reveal-4">macOS 15.0+ · Apple Silicon &amp; Intel · MIT-лицензия</p>
+  </div>
+
+  <div class="container shot-wrap reveal reveal-4">
+    <div class="shot">
+      <img src="screenshot.webp" alt="Скриншот приложения Zvuk [unofficial]" loading="eager" />
+    </div>
+  </div>
+</header>
+
+<!-- ───────── FEATURES ───────── -->
+<section id="features">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-eyebrow">Возможности</div>
+      <h2 class="section-title">Всё, что нужно для<br/>прослушивания музыки</h2>
+      <p class="section-desc">Простой, быстрый и нативный — без Electron, без рекламы, без лишнего.</p>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0c-1.5 0-3 1-3 2.5S10.5 20 12 20s3-1 3-2.5S13.5 15 12 15zM12 3l8 2v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Артисты и альбомы</h3>
+        <p>Полный каталог Zvuk с обложками, треклистами и связанными релизами.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 18 0M3 12a9 9 0 1 1 18 0M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <h3>Персональная Волна</h3>
+        <p>Бесконечное радио по настроению с автоматической подгрузкой треков.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 19V6l11-3v13M9 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm11-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Радио по треку</h3>
+        <p>Один клик — и поток похожей музыки на основе любого трека.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Поиск по каталогу</h3>
+        <p>Быстрый поиск по артистам, релизам, плейлистам и подкастам.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h3>История прослушиваний</h3>
+        <p>Локальная история всего, что вы слушали в приложении, с быстрой навигацией.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Скробблинг в Last.fm</h3>
+        <p>Now Playing, scrobble и синхронизация лайков с библиотекой Last.fm.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Тексты песен</h3>
+        <p>Синхронизированные тексты прямо в окне плеера, без лишних кликов.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 14h6v6H4zM14 4h6v6h-6zM4 4h6v6H4zM14 14h6v6h-6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Раздел «Популярное»</h3>
+        <p>Новинки, хиты, жанры и подборки редакции прямо на главном экране.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── REQUIREMENTS ───────── -->
+<section id="requirements">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-eyebrow">Установка</div>
+      <h2 class="section-title">Просто скачайте DMG</h2>
+      <p class="section-desc">Готовая сборка для macOS — никаких зависимостей и компиляции.</p>
+    </div>
+
+    <div class="req-grid">
+      <div class="req-card">
+        <h3>Системные требования</h3>
+        <ul class="req-list">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            macOS 15.0 (Sequoia) или новее
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Apple Silicon или Intel
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Подключение к интернету
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Действующая подписка Zvuk Premium для воспроизведения
+          </li>
+        </ul>
+      </div>
+
+      <div class="req-card tip">
+        <h3>Первый запуск</h3>
+        <p style="margin: 0 0 10px; color: var(--text-dim); font-size: 14.5px;">
+          Приложение не подписано Apple Developer ID, поэтому Gatekeeper может его заблокировать.
+          Нажмите правой кнопкой → Открыть. Если не помогло, выполните в Терминале:
+        </p>
+        <code>sudo xattr -r -c /Applications/Звук\ \[unofficial\].app</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── DISCLAIMER ───────── -->
+<section style="padding-top: 0;">
+  <div class="container">
+    <div class="disclaimer">
+      <strong>Дисклеймер.</strong> Это неофициальный клиент. Все права на контент принадлежат
+      <a href="https://zvuk.com" target="_blank" rel="noopener" style="color: var(--text); text-decoration: underline; text-decoration-color: rgba(255,255,255,0.25);">Zvuk.com</a>.
+      Проект не связан с компанией Zvuk и не одобрен ею. Распространяется по лицензии MIT
+      «как есть», без каких-либо гарантий.
+    </div>
+  </div>
+</section>
+
+<!-- ───────── FOOTER ───────── -->
+<footer>
+  <div class="container row">
+    <div>© <span id="year"></span> · Сделано с любовью к музыке</div>
+    <div class="links">
+      <a href="https://github.com/korenskoy/yamp-zvuk-com" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/korenskoy/yamp-zvuk-com/releases" target="_blank" rel="noopener">Релизы</a>
+      <a href="https://github.com/korenskoy/yamp-zvuk-com/blob/main/LICENSE" target="_blank" rel="noopener">Лицензия</a>
+      <a href="https://github.com/korenskoy/yamp-zvuk-com/issues" target="_blank" rel="noopener">Issues</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
