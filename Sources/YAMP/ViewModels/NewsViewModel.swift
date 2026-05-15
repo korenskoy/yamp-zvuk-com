@@ -41,6 +41,9 @@ final class NewsViewModel {
     var collectProgress: CollectProgress?
     private var cursor: String?
 
+    @ObservationIgnored
+    private var playAllTask: Task<Void, Never>?
+
     var isCollecting: Bool { collectProgress != nil }
 
     var canPlayAll: Bool {
@@ -89,8 +92,36 @@ final class NewsViewModel {
         }
     }
 
-    /// Стримит треки батчами — каждый раз, как очередное уведомление превращается в треки, вызывается `onBatch`.
-    /// Это позволяет начать воспроизведение с первого готового батча, не дожидаясь всех ~30 запросов.
+    /// Сбор отменяется на `.onDisappear` и при перехвате очереди другим воспроизведением,
+    /// чтобы фоновые батчи не дописывались в чужой playback.
+    func playAll(cacheService: CacheService, playerService: PlayerService) {
+        playAllTask?.cancel()
+        let context = PlaybackContext.news(tab: selectedTab)
+        playAllTask = Task { [weak self] in
+            guard let self else { return }
+            var hasStarted = false
+            await self.collectTracks(cacheService: cacheService) { batch in
+                if hasStarted, playerService.queue.first?.context != context {
+                    self.cancelPlayAll()
+                    return
+                }
+                if hasStarted {
+                    playerService.appendToQueue(batch, context: context)
+                } else {
+                    playerService.playQueue(batch, context: context)
+                    hasStarted = true
+                }
+            }
+        }
+    }
+
+    func cancelPlayAll() {
+        playAllTask?.cancel()
+        playAllTask = nil
+    }
+
+    /// Стримит треки батчами через `onBatch` — позволяет начать воспроизведение
+    /// с первого готового батча, не дожидаясь всех ~30 запросов.
     /// Дёргает CacheService последовательно — параллелить запросы к Zvuk API запрещено.
     /// Per-item ошибки молча проглатываются, транспорт логирует их в LogStore.
     func collectTracks(
@@ -108,6 +139,7 @@ final class NewsViewModel {
         for (index, notification) in playable.enumerated() {
             if Task.isCancelled { return }
             let batch = await Self.fetchTracks(for: notification, cacheService: cacheService)
+            if Task.isCancelled { return }
             if !batch.isEmpty {
                 onBatch(batch)
             }

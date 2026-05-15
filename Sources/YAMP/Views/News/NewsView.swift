@@ -60,6 +60,7 @@ struct NewsView: View {
             await viewModel.load(client: appState.client)
         }
         .onAppear(perform: markNewsAsRead)
+        .onDisappear { viewModel.cancelPlayAll() }
     }
 
     private func markNewsAsRead() {
@@ -147,18 +148,7 @@ struct NewsView: View {
     }
 
     private func playAll() {
-        let tab = viewModel.selectedTab
-        Task {
-            var hasStarted = false
-            await viewModel.collectTracks(cacheService: cacheService) { batch in
-                if hasStarted {
-                    playerService.appendToQueue(batch, context: .news(tab: tab))
-                } else {
-                    playerService.playQueue(batch, context: .news(tab: tab))
-                    hasStarted = true
-                }
-            }
-        }
+        viewModel.playAll(cacheService: cacheService, playerService: playerService)
     }
 
     private static let isoFormatter: ISO8601DateFormatter = {
