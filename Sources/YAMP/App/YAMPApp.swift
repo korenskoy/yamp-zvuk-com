@@ -14,6 +14,7 @@ struct YAMPApp: App {
     @State private var logStore = LogStore()
     @State private var historyStore = ListeningHistoryStore()
     @State private var lastFMService = LastFMService()
+    @State private var updateService = UpdateService()
 
     var body: some Scene {
         WindowGroup {
@@ -34,6 +35,7 @@ struct YAMPApp: App {
             .environment(logStore)
             .environment(historyStore)
             .environment(lastFMService)
+            .environment(updateService)
             .task {
                 // Activate as regular app (show in Dock with icon and menu)
                 NSApplication.shared.setActivationPolicy(.regular)
@@ -41,6 +43,8 @@ struct YAMPApp: App {
 
                 // Use thin overlay scrollbars
                 UserDefaults.standard.set("WhenScrolling", forKey: "AppleShowScrollBars")
+
+                updateService.start()
 
                 guard !appState.isAuthenticated else { return }
 
@@ -80,7 +84,7 @@ struct YAMPApp: App {
                     credits.append(NSAttributedString(string: ".", attributes: [.paragraphStyle: paragraphStyle]))
                     NSApplication.shared.orderFrontStandardAboutPanel(options: [
                         .applicationName: "Звук [unofficial]",
-                        .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0",
+                        .applicationVersion: AppVersion.marketing,
                         .credits: credits,
                     ])
                 }

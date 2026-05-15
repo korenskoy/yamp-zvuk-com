@@ -6,6 +6,8 @@ struct SettingsView: View {
     @Environment(AppSettings.self) private var appSettings
     @Environment(CacheService.self) private var cacheService
     @Environment(LastFMService.self) private var lastFMService
+    @Environment(UpdateService.self) private var updateService
+    @Environment(\.openURL) private var openURL
 
     @State private var subscription: Subscription?
     @State private var featuredInfo: FeaturedInfo?
@@ -96,8 +98,17 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Обновления") {
+                updateStatusCard
+
+                Toggle("Проверять при запуске", isOn: Binding(
+                    get: { updateService.autoCheckOnLaunch },
+                    set: { updateService.autoCheckOnLaunch = $0 }
+                ))
+            }
+
             Section("О приложении") {
-                LabeledContent("Версия", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—")
+                LabeledContent("Версия", value: AppVersion.displayString)
                 LabeledContent("Исходный код") {
                     Link("GitHub", destination: URL(string: "https://github.com/korenskoy/yamp-zvuk-com")!)
                 }
@@ -127,6 +138,80 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showFeatureFlags) {
             featureFlagsSheet
+        }
+    }
+
+    // MARK: - Update Status Card
+
+    private var updateStatusCard: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(updateStatusColor)
+                        .frame(width: 8, height: 8)
+                    Text(updateStatusTitle)
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                Text(updateStatusSubtitle)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            updateActionButton
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var updateStatusColor: Color {
+        if updateService.availableUpdate != nil { return .orange }
+        if updateService.lastCheckedAt != nil { return .green }
+        return .secondary
+    }
+
+    private var updateStatusTitle: String {
+        if let update = updateService.availableUpdate {
+            return "Доступно обновление — версия \(update.version)"
+        }
+        if updateService.lastCheckedAt != nil { return "У вас актуальная версия" }
+        return "Ещё не проверялось"
+    }
+
+    private var updateStatusSubtitle: String {
+        if updateService.isChecking { return "Проверяем GitHub…" }
+        let last = UpdateStatusFormatter.lastChecked(at: updateService.lastCheckedAt)
+        if let next = UpdateStatusFormatter.nextCheck(
+            after: updateService.lastCheckedAt,
+            interval: updateService.checkInterval
+        ), updateService.autoCheckOnLaunch {
+            return "\(last) · \(next)"
+        }
+        return last
+    }
+
+    @ViewBuilder
+    private var updateActionButton: some View {
+        if let update = updateService.availableUpdate {
+            Button {
+                openURL(update.url)
+            } label: {
+                Label("Открыть релиз", systemImage: "arrow.up.right.square")
+            }
+            .buttonStyle(.accent)
+        } else {
+            Button {
+                Task { await updateService.checkNow() }
+            } label: {
+                if updateService.isChecking {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Label("Проверить", systemImage: "arrow.clockwise")
+                }
+            }
+            .buttonStyle(.bordered)
+            .disabled(updateService.isChecking)
         }
     }
 
