@@ -2,12 +2,12 @@ import SwiftUI
 
 struct GridSheet<Content: View>: View {
     let title: String
+    var minItemWidth: CGFloat = 140
+    var maxItemWidth: CGFloat = 180
     @ViewBuilder let content: Content
 
     @Environment(\.dismiss) private var dismiss
 
-    private let minItemWidth: CGFloat = 140
-    private let maxItemWidth: CGFloat = 180
     private let spacing: CGFloat = 16
 
     var body: some View {
