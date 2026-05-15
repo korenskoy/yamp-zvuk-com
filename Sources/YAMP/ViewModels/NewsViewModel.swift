@@ -89,24 +89,30 @@ final class NewsViewModel {
         }
     }
 
+    /// Стримит треки батчами — каждый раз, как очередное уведомление превращается в треки, вызывается `onBatch`.
+    /// Это позволяет начать воспроизведение с первого готового батча, не дожидаясь всех ~30 запросов.
     /// Дёргает CacheService последовательно — параллелить запросы к Zvuk API запрещено.
     /// Per-item ошибки молча проглатываются, транспорт логирует их в LogStore.
-    func collectTracks(cacheService: CacheService) async -> [SimpleTrack] {
-        guard !isCollecting else { return [] }
+    func collectTracks(
+        cacheService: CacheService,
+        onBatch: @MainActor ([SimpleTrack]) -> Void
+    ) async {
+        guard !isCollecting else { return }
 
         let playable = notifications.filter(Self.isPlayable)
-        guard !playable.isEmpty else { return [] }
+        guard !playable.isEmpty else { return }
 
         collectProgress = CollectProgress(current: 0, total: playable.count)
         defer { collectProgress = nil }
 
-        var tracks: [SimpleTrack] = []
         for (index, notification) in playable.enumerated() {
-            if Task.isCancelled { return tracks }
-            tracks.append(contentsOf: await Self.fetchTracks(for: notification, cacheService: cacheService))
+            if Task.isCancelled { return }
+            let batch = await Self.fetchTracks(for: notification, cacheService: cacheService)
+            if !batch.isEmpty {
+                onBatch(batch)
+            }
             collectProgress = CollectProgress(current: index + 1, total: playable.count)
         }
-        return tracks
     }
 
     private static func fetchTracks(

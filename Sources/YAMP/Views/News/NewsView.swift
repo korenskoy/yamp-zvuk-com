@@ -149,9 +149,15 @@ struct NewsView: View {
     private func playAll() {
         let tab = viewModel.selectedTab
         Task {
-            let tracks = await viewModel.collectTracks(cacheService: cacheService)
-            guard !tracks.isEmpty else { return }
-            playerService.playQueue(tracks, context: .news(tab: tab))
+            var hasStarted = false
+            await viewModel.collectTracks(cacheService: cacheService) { batch in
+                if hasStarted {
+                    playerService.appendToQueue(batch, context: .news(tab: tab))
+                } else {
+                    playerService.playQueue(batch, context: .news(tab: tab))
+                    hasStarted = true
+                }
+            }
         }
     }
 

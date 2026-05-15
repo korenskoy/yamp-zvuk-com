@@ -91,6 +91,16 @@ final class PlayerService {
         Task { await loadAndPlay(track) }
     }
 
+    /// Дописывает треки в конец текущей очереди без перезапуска воспроизведения.
+    /// При включённом shuffle новые треки идут в конец как есть — тот же компромисс, что в Wave-auto-continue.
+    func appendToQueue(_ tracks: [SimpleTrack], context: PlaybackContext) {
+        guard !tracks.isEmpty else { return }
+        let items = tracks.map { QueueItem(track: $0, context: context) }
+        queue.append(contentsOf: items)
+        originalQueue.append(contentsOf: items)
+        saveState()
+    }
+
     func resume() {
         player.play()
         isPlaying = true
