@@ -45,10 +45,7 @@ struct CollectionView: View {
                 )
             } else {
                 ScrollView {
-                    let simpleTracks = viewModel.likedTracks.map { track in
-                        SimpleTrack(id: track.id, title: track.title, duration: track.duration,
-                                    explicit: track.explicit, artists: track.artists, release: track.release)
-                    }
+                    let simpleTracks = viewModel.likedTracks.map(\.simplified)
                     LazyVStack(spacing: 2) {
                         ForEach(Array(simpleTracks.enumerated()), id: \.element.id) { index, simple in
                             TrackRowView(track: simple) {

@@ -126,10 +126,7 @@ final class NewsViewModel {
             guard let trackId = episode.trackId,
                   let track = try? await cacheService.getTrack(trackId)
             else { return [] }
-            return [SimpleTrack(
-                id: track.id, title: track.title, duration: track.duration,
-                explicit: track.explicit, artists: track.artists, release: track.release
-            )]
+            return [track.simplified]
 
         case .newBook, .unknown:
             return []

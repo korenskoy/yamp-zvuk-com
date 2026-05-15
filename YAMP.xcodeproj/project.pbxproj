@@ -74,6 +74,7 @@
 		D0AC2B897A801EAAC093C0B4 /* ZvukMusic in Frameworks */ = {isa = PBXBuildFile; productRef = B1AD32F23821523FD9604D32 /* ZvukMusic */; };
 		D65E2FA442386ADE8E53F516 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 882CC147A4A1534622402AAD /* NowPlayingView.swift */; };
 		D6AD32ED70DFE71FABD85695 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA72B33F418F6D475979EA8 /* SplashView.swift */; };
+		D72DADDEC21CDB0AD5814117 /* Track+Simplified.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5EC079ACC5A321A41A8C59 /* Track+Simplified.swift */; };
 		DAA1819A461CE06D720D9FAC /* MouseNavigationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596C1D28E5A73986ECEB6E60 /* MouseNavigationHandler.swift */; };
 		DC6A10DB69FEB879B26288DD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99C18F3A1797C7E8884E4DE /* SettingsView.swift */; };
 		DCEB34A1B9E52DA33D071D5C /* ShareButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FE72ECC7B30A9611D7DD344 /* ShareButton.swift */; };
@@ -99,6 +100,7 @@
 		16D5A9F053C117182322E985 /* RecommendedPlaylistCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendedPlaylistCardView.swift; sourceTree = "<group>"; };
 		17B3368D367E2D7AF9CE5E19 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		1CCAA2668B562C5E0A632A7D /* AccentButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccentButtonStyle.swift; sourceTree = "<group>"; };
+		1F5EC079ACC5A321A41A8C59 /* Track+Simplified.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Track+Simplified.swift"; sourceTree = "<group>"; };
 		1FC8BAB9EB06A8A5A45D7897 /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
 		1FE72ECC7B30A9611D7DD344 /* ShareButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareButton.swift; sourceTree = "<group>"; };
 		212C38DE20EAA0C75D37FEF7 /* ArtistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistView.swift; sourceTree = "<group>"; };
@@ -479,6 +481,7 @@
 			isa = PBXGroup;
 			children = (
 				84E23CE8656C523AEFD01FE0 /* TimeInterval+Format.swift */,
+				1F5EC079ACC5A321A41A8C59 /* Track+Simplified.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -630,6 +633,7 @@
 				7E3AFBE05893042F4A443E0E /* SidebarView.swift in Sources */,
 				D6AD32ED70DFE71FABD85695 /* SplashView.swift in Sources */,
 				BB68634FC902E39C18D2FAA3 /* TimeInterval+Format.swift in Sources */,
+				D72DADDEC21CDB0AD5814117 /* Track+Simplified.swift in Sources */,
 				60D1F6FAE69B4187DF94C211 /* TrackRowView.swift in Sources */,
 				516027BD7B3C1C22FB3A3FEB /* VolumeControlView.swift in Sources */,
 				2F05F08F5289C61C7C63F17C /* WaveGenreSheet.swift in Sources */,

@@ -120,12 +120,8 @@ struct PlayerBarView: View {
                 let result = try await client.getRadioByTrack(track.id)
                 let tracks = result.tracks
                 if !tracks.isEmpty {
-                    let simple = tracks.map {
-                        SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
-                                    explicit: $0.explicit, artists: $0.artists, release: $0.release)
-                    }
                     playerService.playQueue(
-                        simple,
+                        tracks.map(\.simplified),
                         context: .radioTrack(id: track.id)
                     )
                 }

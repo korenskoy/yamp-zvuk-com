@@ -23,12 +23,8 @@ final class ArtistViewModel {
             let result = try await client.getRadioByArtist(artist.id)
             let tracks = result.tracks
             if !tracks.isEmpty {
-                let simple = tracks.map {
-                    SimpleTrack(id: $0.id, title: $0.title, duration: $0.duration,
-                                explicit: $0.explicit, artists: $0.artists, release: $0.release)
-                }
                 playerService.playQueue(
-                    simple,
+                    tracks.map(\.simplified),
                     context: .radioArtist(id: artist.id)
                 )
             }

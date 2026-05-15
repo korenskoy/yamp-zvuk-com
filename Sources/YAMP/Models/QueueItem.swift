@@ -32,10 +32,7 @@ enum PlaybackContext: Hashable, Codable {
             )
             return tracks.compactMap { track in
                 guard !track.id.isEmpty else { return nil }
-                return SimpleTrack(
-                    id: track.id, title: track.title, duration: track.duration,
-                    explicit: track.explicit, artists: track.artists, release: track.release
-                )
+                return track.simplified
             }
         }
     }
