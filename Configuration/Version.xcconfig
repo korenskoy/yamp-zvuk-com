@@ -1,4 +1,4 @@
 // MARKETING_VERSION — пользовательская версия (semver), правится вручную при релизе.
 // CURRENT_PROJECT_VERSION — build number, инкрементится автоматически в scripts/build-dmg.sh.
 MARKETING_VERSION = 1.2.4
-CURRENT_PROJECT_VERSION = 126
+CURRENT_PROJECT_VERSION = 128
