@@ -73,6 +73,7 @@ final class PlayerService {
     }
 
     func playQueue(_ tracks: [SimpleTrack], context: PlaybackContext, startAt index: Int = 0) {
+        guard !tracks.isEmpty else { return }
         let items = tracks.map { QueueItem(track: $0, context: context) }
         originalQueue = items
         if isShuffled {
@@ -91,7 +92,6 @@ final class PlayerService {
         Task { await loadAndPlay(track) }
     }
 
-    /// Дописывает треки в конец текущей очереди без перезапуска воспроизведения.
     /// При включённом shuffle новые треки идут в конец как есть — тот же компромисс, что в Wave-auto-continue.
     func appendToQueue(_ tracks: [SimpleTrack], context: PlaybackContext) {
         guard !tracks.isEmpty else { return }
@@ -293,9 +293,7 @@ final class PlayerService {
                 updateNowPlayingPlaybackState()
                 return
             }
-            let newItems = tracks.map { QueueItem(track: $0, context: .wave(params: params)) }
-            queue.append(contentsOf: newItems)
-            originalQueue.append(contentsOf: newItems)
+            appendToQueue(tracks, context: .wave(params: params))
             next()
         } catch {
             isPlaying = false
