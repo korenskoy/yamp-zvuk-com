@@ -3,6 +3,8 @@ import ZvukMusic
 
 struct NewsView: View {
     @Environment(AppState.self) private var appState
+    @Environment(PlayerService.self) private var playerService
+    @Environment(CacheService.self) private var cacheService
     @State private var viewModel = NewsViewModel()
 
     var body: some View {
@@ -71,8 +73,14 @@ struct NewsView: View {
     private var newsContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Новости")
-                    .font(.title.weight(.bold))
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Новости")
+                        .font(.title.weight(.bold))
+
+                    Spacer()
+
+                    playAllControl
+                }
 
                 Text("Последние релизы артистов, подкастов и обновления друзей, на которых вы подписаны")
                     .font(.callout)
@@ -113,6 +121,37 @@ struct NewsView: View {
                 }
             }
             .padding(20)
+        }
+    }
+
+    @ViewBuilder
+    private var playAllControl: some View {
+        if viewModel.canPlayAll || viewModel.isCollecting {
+            Button(action: playAll) {
+                if let progress = viewModel.collectProgress {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(.white)
+                        Text("\(progress.current) / \(progress.total)")
+                            .monospacedDigit()
+                    }
+                } else {
+                    Label("Слушать всё", systemImage: "play.fill")
+                }
+            }
+            .buttonStyle(.accent)
+            .controlSize(.large)
+            .disabled(viewModel.isCollecting)
+        }
+    }
+
+    private func playAll() {
+        let tab = viewModel.selectedTab
+        Task {
+            let tracks = await viewModel.collectTracks(cacheService: cacheService)
+            guard !tracks.isEmpty else { return }
+            playerService.playQueue(tracks, context: .news(tab: tab))
         }
     }
 

@@ -10,6 +10,7 @@ enum PlaybackContext: Hashable, Codable {
     case radioArtist(id: String)
     case radioTrack(id: String)
     case wave(params: WaveParams)
+    case news(tab: NewsTab)
 
     struct WaveParams: Hashable, Codable {
         var energy: Double
