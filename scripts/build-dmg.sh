@@ -12,6 +12,7 @@ cd "$(dirname "$0")/.."
 # ── Bump build number ────────────────────────────────────────────────────────
 VERSION_FILE="Configuration/Version.xcconfig"
 CURRENT_BUILD=$(grep '^CURRENT_PROJECT_VERSION' "$VERSION_FILE" | sed 's/.*=[[:space:]]*//')
+MARKETING_VERSION=$(grep '^MARKETING_VERSION' "$VERSION_FILE" | sed 's/.*=[[:space:]]*//')
 NEW_BUILD=$((CURRENT_BUILD + 1))
 echo "==> Bumping build: $CURRENT_BUILD → $NEW_BUILD"
 sed -i '' "s/^CURRENT_PROJECT_VERSION = $CURRENT_BUILD\$/CURRENT_PROJECT_VERSION = $NEW_BUILD/" "$VERSION_FILE"
@@ -19,8 +20,9 @@ sed -i '' "s/^CURRENT_PROJECT_VERSION = $CURRENT_BUILD\$/CURRENT_PROJECT_VERSION
 echo "==> Regenerating Xcode project..."
 xcodegen generate >/dev/null
 
-echo "==> Cleaning..."
-rm -rf "$BUILD_DIR"
+echo "==> Cleaning build artifacts..."
+rm -rf "$BUILD_DIR/derived" "$BUILD_DIR/dmg-staging" "$BUILD_DIR"/*.dmg
+mkdir -p "$BUILD_DIR"
 
 echo "==> Building Release..."
 xcodebuild -project "$PROJECT" \
@@ -48,7 +50,7 @@ cp -R "$APP_PATH" "$STAGING/$APP_NAME.app"
 ln -s /Applications "$STAGING/Applications"
 
 echo "==> Creating DMG..."
-DMG_PATH="$BUILD_DIR/$DMG_NAME.dmg"
+DMG_PATH="$BUILD_DIR/$DMG_NAME-$MARKETING_VERSION.dmg"
 rm -f "$DMG_PATH"
 
 hdiutil create \
