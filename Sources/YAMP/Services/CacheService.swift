@@ -17,6 +17,7 @@ private enum TTL {
     static let fullPlaylist: TimeInterval = 5 * 60
     static let lyrics: TimeInterval = 60 * 60
     static let queryResult: TimeInterval = 2 * 60
+    static let recommendations: TimeInterval = 30 * 60
     static let stream: TimeInterval = 9 * 60
 }
 
@@ -52,10 +53,12 @@ final class CacheService {
     private var editorialPlaylistIDs: CacheEntry<[String]>?
     private var hiddenCollection: CacheEntry<HiddenCollection>?
     private var recommendations: CacheEntry<DynamicBlock>?
+    private var recommendationsInflight: Task<DynamicBlock, Error>?
     private var grids: [String: CacheEntry<GridPage>] = [:]
 
     func configure(appState: AppState) {
         self.appState = appState
+        loadPersistedRecommendations()
     }
 
     // MARK: - Tracks
@@ -346,8 +349,122 @@ final class CacheService {
         }
         guard let client else { return DynamicBlock() }
         let block = try await client.getMusicRecommendations()
-        recommendations = CacheEntry(value: block, insertedAt: Date(), ttl: TTL.queryResult)
+        recommendations = CacheEntry(value: block, insertedAt: Date(), ttl: TTL.recommendations)
+        persistRecommendations()
         return block
+    }
+
+    /// Догружает все недостающие страницы рекомендаций последовательно и кэширует полный набор.
+    /// Параллельные вызовы делят одну in-flight задачу — повторного трафика к API не происходит.
+    func loadAllRecommendations() async throws -> DynamicBlock {
+        if let inflight = recommendationsInflight {
+            return try await inflight.value
+        }
+        let task = Task { try await performLoadAllRecommendations() }
+        recommendationsInflight = task
+        defer { recommendationsInflight = nil }
+        return try await task.value
+    }
+
+    private func performLoadAllRecommendations() async throws -> DynamicBlock {
+        let initial = try await getRecommendations()
+        // totalPages приходит через decodeDefault со значением 0 — это означает «сервер поле не прислал»,
+        // в таком случае угадывать число страниц нельзя.
+        guard initial.totalPages > 0 else {
+            if !initial.pages.isEmpty {
+                print("[YAMP][Cache] recommendations: totalPages=0, страниц больше не запрашиваем")
+            }
+            return initial
+        }
+        guard initial.totalPages > initial.pages.count, let client else {
+            return initial
+        }
+
+        let initialInsertedAt = recommendations?.insertedAt ?? Date()
+        let loaded = Set(initial.pages.map(\.page))
+        let missing = (1...initial.totalPages).filter { !loaded.contains($0) }
+
+        var pagesByNumber: [Int: DynamicBlockPage] = Dictionary(
+            uniqueKeysWithValues: initial.pages.map { ($0.page, $0) }
+        )
+
+        for page in missing {
+            try Task.checkCancellation()
+            let block = try await client.getMusicRecommendations(pages: [page])
+            // API может прислать чужую/дубликат страницу — берём только ту, что запрашивали.
+            if let actual = block.pages.first(where: { $0.page == page }) {
+                pagesByNumber[page] = actual
+            } else {
+                print("[YAMP][Cache] recommendations: страница \(page) не пришла в ответе, прерываем")
+                break
+            }
+        }
+
+        let merged = DynamicBlock(
+            totalPages: initial.totalPages,
+            pages: pagesByNumber.keys.sorted().compactMap { pagesByNumber[$0] }
+        )
+        recommendations = CacheEntry(value: merged, insertedAt: initialInsertedAt, ttl: TTL.recommendations)
+        persistRecommendations()
+        return merged
+    }
+
+    func invalidateRecommendations() {
+        recommendationsInflight?.cancel()
+        recommendationsInflight = nil
+        recommendations = nil
+        deletePersistedRecommendations()
+    }
+
+    // MARK: - Recommendations persistence
+
+    private struct PersistedRecommendations: Codable {
+        let block: DynamicBlock
+        let insertedAt: Date
+    }
+
+    private func recommendationsCacheURL() -> URL? {
+        guard let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        let dir = base.appendingPathComponent("yamp", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("recommendations.json")
+    }
+
+    private func loadPersistedRecommendations() {
+        guard recommendations == nil,
+              let url = recommendationsCacheURL(),
+              FileManager.default.fileExists(atPath: url.path) else { return }
+        do {
+            let data = try Data(contentsOf: url)
+            let persisted = try JSONDecoder().decode(PersistedRecommendations.self, from: data)
+            let entry = CacheEntry(value: persisted.block, insertedAt: persisted.insertedAt, ttl: TTL.recommendations)
+            if entry.isExpired {
+                try? FileManager.default.removeItem(at: url)
+            } else {
+                recommendations = entry
+            }
+        } catch {
+            print("[YAMP][Cache] не удалось прочитать persisted recommendations: \(error)")
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+
+    private func persistRecommendations() {
+        guard let url = recommendationsCacheURL(), let entry = recommendations else { return }
+        let persisted = PersistedRecommendations(block: entry.value, insertedAt: entry.insertedAt)
+        do {
+            let data = try JSONEncoder().encode(persisted)
+            try data.write(to: url, options: .atomic)
+        } catch {
+            print("[YAMP][Cache] не удалось сохранить recommendations на диск: \(error)")
+        }
+    }
+
+    private func deletePersistedRecommendations() {
+        guard let url = recommendationsCacheURL() else { return }
+        try? FileManager.default.removeItem(at: url)
     }
 
     // MARK: - Hidden Collection (query result)
@@ -392,7 +509,10 @@ final class CacheService {
         likedTrackIDs = nil
         userPlaylistIDs = nil
         editorialPlaylistIDs = nil
+        recommendationsInflight?.cancel()
+        recommendationsInflight = nil
         recommendations = nil
+        deletePersistedRecommendations()
         hiddenCollection = nil
         grids.removeAll()
     }

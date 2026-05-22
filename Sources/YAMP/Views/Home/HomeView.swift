@@ -1,12 +1,12 @@
 import SwiftUI
 import ZvukMusic
 
-extension RecommendationItem: Identifiable {
+extension RecommendationItem: @retroactive Identifiable {
     public var id: String {
         switch self {
-        case .artist(let artist): return artist.id
-        case .release(let release): return release.id
-        case .playlist(let playlist): return playlist.id
+        case .artist(let artist): return "artist:\(artist.id)"
+        case .release(let release): return "release:\(release.id)"
+        case .playlist(let playlist): return "playlist:\(playlist.id)"
         case .unknown: return "unknown"
         }
     }
