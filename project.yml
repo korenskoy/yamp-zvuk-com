@@ -47,3 +47,6 @@ targets:
         product: LastFM
     entitlements:
       path: YAMP.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
