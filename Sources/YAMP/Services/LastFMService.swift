@@ -63,7 +63,8 @@ final class LastFMService {
                     let sessionStart = Date()
                     do {
                         let session = try await apiClient.getSession(token: token)
-                        let body = "{\"method\":\"auth.getSession\",\"token\":\"\(token)\"}"
+                        // Токен не логируем — маскируем.
+                        let body = "{\"method\":\"auth.getSession\",\"token\":\"***\"}"
                         logStore?.appendLastFM(
                             method: "POST", url: "last.fm/auth.getSession", statusCode: 200,
                             duration: Date().timeIntervalSince(sessionStart), error: nil,
@@ -79,7 +80,7 @@ final class LastFMService {
                             method: "POST", url: "last.fm/auth.getSession", statusCode: nil,
                             duration: Date().timeIntervalSince(sessionStart),
                             error: error.localizedDescription,
-                            requestBody: "{\"method\":\"auth.getSession\",\"token\":\"\(token)\"}"
+                            requestBody: "{\"method\":\"auth.getSession\",\"token\":\"***\"}"
                         )
                         try await Task.sleep(for: .seconds(3))
                     }
@@ -278,7 +279,14 @@ final class LastFMService {
         SecItemDelete(query as CFDictionary)
         var add = query
         add[kSecValueData as String] = data
-        SecItemAdd(add as CFDictionary, nil)
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        let status = SecItemAdd(add as CFDictionary, nil)
+        if status != errSecSuccess {
+            logStore?.appendLastFM(
+                method: "KEYCHAIN", url: "keychain/\(account)", statusCode: nil,
+                duration: 0, error: "SecItemAdd OSStatus \(status)"
+            )
+        }
     }
 
     private func load(fromKeychain account: String) -> String? {
@@ -349,9 +357,10 @@ private final class LastFMAPIClient: Sendable {
 }
 
 // MARK: - API Credentials
-// Register your own at https://www.last.fm/api/account/create if needed
+// Инъекция на этапе сборки: Configuration/Secrets.xcconfig → Info.plist → Bundle.
+// В исходниках секрета нет. Шаблон — Configuration/Secrets.example.xcconfig.
 
 private enum LastFMCredentials {
-    static let apiKey = "5f6043bb316a036361fb73479f7a491a"
-    static let apiSecret = "a169c25cfa36586c1654db565bc0a938"
+    static let apiKey = Bundle.main.object(forInfoDictionaryKey: "LastFMAPIKey") as? String ?? ""
+    static let apiSecret = Bundle.main.object(forInfoDictionaryKey: "LastFMAPISecret") as? String ?? ""
 }

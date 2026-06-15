@@ -24,6 +24,10 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LastFMAPIKey</key>
+	<string>$(LASTFM_API_KEY)</string>
+	<key>LastFMAPISecret</key>
+	<string>$(LASTFM_API_SECRET)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.music</string>
 	<key>LSMinimumSystemVersion</key>

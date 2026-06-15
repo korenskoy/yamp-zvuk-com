@@ -6,7 +6,7 @@
 ._*
 
 # Custom folder icons
-Icon
+Icon
 
 # Volume root files
 .DocumentRevisions-V100
@@ -98,3 +98,6 @@ playground.xcworkspace
 # Package.resolved
 .build/.lock
 .build/
+
+### Secrets (injected at build time — NEVER commit)
+Configuration/Secrets.xcconfig
