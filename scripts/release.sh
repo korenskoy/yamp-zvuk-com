@@ -65,15 +65,12 @@ fi
 echo "==> Building DMG..."
 ./scripts/build-dmg.sh
 
-# Find and rename DMG
-SRC_DMG=$(find build -name "Zvuk-unofficial.dmg" -type f | head -1)
-if [ -z "$SRC_DMG" ]; then
-    echo "Error: DMG not found after build"
+# build-dmg.sh уже создаёт версионированный DMG (build/Zvuk-unofficial-<version>.dmg)
+DEST_DMG="build/$DMG_NAME"
+if [ ! -f "$DEST_DMG" ]; then
+    echo "Error: DMG not found after build: $DEST_DMG"
     exit 1
 fi
-
-DEST_DMG="build/$DMG_NAME"
-mv "$SRC_DMG" "$DEST_DMG"
 echo "==> DMG: $DEST_DMG ($(du -h "$DEST_DMG" | cut -f1))"
 
 # ── Create tag and push ─────────────────────────────────────────────────────

@@ -78,6 +78,28 @@ final class LogStore {
         formatter.string(from: date)
     }
 
+    /// Логирует локальную (не сетевую) ошибку сервиса — чтобы ошибки, не проходящие
+    /// через транспорт zvuk-swift, не терялись молча (требование проекта).
+    func appendLocal(source: APISource = .zvuk, operation: String, error: String) {
+        let entry = Entry(
+            timestamp: Date(),
+            method: "LOCAL",
+            url: operation,
+            statusCode: nil,
+            duration: 0,
+            error: error,
+            bytesSent: 0,
+            bytesReceived: 0,
+            requestBody: nil,
+            responseBody: nil,
+            apiSource: source
+        )
+        entries.append(entry)
+        if entries.count > Self.maxEntries {
+            entries.removeFirst(entries.count - Self.maxEntries)
+        }
+    }
+
     func appendLastFM(method: String, url: String, statusCode: Int?, duration: TimeInterval, error: String?, requestBody: String? = nil) {
         let entry = Entry(
             timestamp: Date(),

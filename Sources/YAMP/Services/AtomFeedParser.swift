@@ -10,13 +10,24 @@ final class AtomFeedParser: NSObject, XMLParserDelegate {
         let delegate = AtomFeedParser()
         let parser = XMLParser(data: data)
         parser.delegate = delegate
-        parser.parse()
-        return delegate.entries.first { !isPrerelease($0.tag) }
-            .flatMap { entry in
-                guard let version = extractVersion(fromTag: entry.tag) ?? extractVersion(fromTitle: entry.title),
-                      let url = entry.url else { return nil }
-                return LatestEntry(version: version, url: url)
-            }
+        // Явно запрещаем внешние сущности (XXE) и DTD из недоверенного фида.
+        parser.shouldResolveExternalEntities = false
+        // При обрыве/мусоре не используем частично распарсенные данные.
+        guard parser.parse() else { return nil }
+        // Берём первую стабильную запись с пригодной версией и валидной ссылкой,
+        // а не только самую первую — иначе один битый элемент отключит проверку обновлений.
+        for entry in delegate.entries where !isPrerelease(entry.tag) {
+            guard let version = extractVersion(fromTag: entry.tag) ?? extractVersion(fromTitle: entry.title),
+                  let url = entry.url, isTrustedReleaseURL(url) else { continue }
+            return LatestEntry(version: version, url: url)
+        }
+        return nil
+    }
+
+    /// Принимаем только https-ссылки на github.com — фид/аккаунт может быть скомпрометирован.
+    private static func isTrustedReleaseURL(_ url: URL) -> Bool {
+        guard url.scheme == "https", let host = url.host else { return false }
+        return host == "github.com" || host.hasSuffix(".github.com")
     }
 
     private struct RawEntry {

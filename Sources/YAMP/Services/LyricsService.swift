@@ -1,4 +1,5 @@
 import Foundation
+import os.log
 import ZvukMusic
 
 struct LyricsLine: Identifiable {
@@ -9,9 +10,20 @@ struct LyricsLine: Identifiable {
 
 @MainActor
 final class LyricsService {
+    private static let log = Logger(subsystem: "ru.korenskoy.zvuk-unofficial", category: "Lyrics")
+
     func fetchLyrics(trackId: String, cache: CacheService?) async -> (lines: [LyricsLine], isSynced: Bool)? {
         guard let cache else { return nil }
-        guard let lyrics = try? await cache.getLyrics(trackId) else { return nil }
+        let lyrics: Lyrics?
+        do {
+            lyrics = try await cache.getLyrics(trackId)
+        } catch is CancellationError {
+            return nil
+        } catch {
+            Self.log.error("Не удалось загрузить текст трека \(trackId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+        guard let lyrics else { return nil }
 
         if lyrics.isSynced {
             let lines = parseLRC(lyrics.lyrics)

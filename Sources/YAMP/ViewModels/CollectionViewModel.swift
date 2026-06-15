@@ -1,5 +1,4 @@
 import Foundation
-import Observation
 import ZvukMusic
 
 enum CollectionTab: String, CaseIterable {
@@ -24,13 +23,7 @@ final class CollectionViewModel {
         defer { isLoading = false }
 
         if !collectionService.isLoaded {
-            await withCheckedContinuation { continuation in
-                withObservationTracking {
-                    _ = collectionService.isLoaded
-                } onChange: {
-                    Task { @MainActor in continuation.resume() }
-                }
-            }
+            await waitForCollectionLoaded(collectionService)
         }
         guard collectionService.isLoaded else { return }
 
@@ -39,16 +32,26 @@ final class CollectionViewModel {
             case .tracks:
                 likedTracks = try await cache.getLikedTracks(orderBy: .dateAdded, direction: .desc)
             case .artists:
-                let ids = Array(collectionService.likedArtistIDs)
+                // Set даёт недетерминированный порядок — сортируем id для стабильной выдачи между заходами.
+                let ids = collectionService.likedArtistIDs.sorted()
                 guard !ids.isEmpty else { likedArtists = []; return }
                 likedArtists = try await cache.getArtists(ids)
             case .releases:
-                let ids = Array(collectionService.likedReleaseIDs)
+                let ids = collectionService.likedReleaseIDs.sorted()
                 guard !ids.isEmpty else { likedReleases = []; return }
                 likedReleases = try await cache.getReleases(ids)
             }
         } catch {
             self.appError = AppError.from(error)
+        }
+    }
+
+    /// Ждёт завершения начальной загрузки коллекции (запускается при старте/логине).
+    /// Ограничено по времени и отменяемо, чтобы спиннер не висел вечно при сбое загрузки.
+    private func waitForCollectionLoaded(_ collectionService: CollectionService) async {
+        for _ in 0..<200 { // ~20 с максимум
+            if collectionService.isLoaded || Task.isCancelled { return }
+            try? await Task.sleep(for: .milliseconds(100))
         }
     }
 }

@@ -9,17 +9,17 @@ enum ShareTarget {
 }
 
 enum ShareService {
-    static func url(for target: ShareTarget) -> URL {
+    static func url(for target: ShareTarget) -> URL? {
+        let path: String
+        let id: String
         switch target {
-        case .artist(let id):
-            URL(string: "https://zvuk.com/artist/\(id)")!
-        case .release(let id):
-            URL(string: "https://zvuk.com/release/\(id)")!
-        case .playlist(let id):
-            URL(string: "https://zvuk.com/playlist/\(id)")!
-        case .track(let id):
-            URL(string: "https://zvuk.com/track/\(id)")!
+        case .artist(let value): (path, id) = ("artist", value)
+        case .release(let value): (path, id) = ("release", value)
+        case .playlist(let value): (path, id) = ("playlist", value)
+        case .track(let value): (path, id) = ("track", value)
         }
+        guard let encoded = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else { return nil }
+        return URL(string: "https://zvuk.com/\(path)/\(encoded)")
     }
 
     static func copyToPasteboard(_ url: URL) {

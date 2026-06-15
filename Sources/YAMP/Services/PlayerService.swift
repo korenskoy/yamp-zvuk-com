@@ -31,6 +31,11 @@ final class PlayerService {
     private var timeObserver: Any?
     private var itemObserver: NSKeyValueObservation?
     private var statusObserver: NSKeyValueObservation?
+    private var endObserver: (any NSObjectProtocol)?
+
+    /// Поколение загрузки: каждый новый `loadAndPlay` инкрементирует счётчик,
+    /// а результат применяется только если поколение не устарело (защита от гонки быстрых next/prev).
+    private var loadGeneration = 0
 
     @ObservationIgnored
     private weak var appState: AppState?
@@ -47,18 +52,22 @@ final class PlayerService {
     @ObservationIgnored
     private weak var lastFMService: LastFMService?
 
+    @ObservationIgnored
+    private weak var logStore: LogStore?
+
     init() {
         player.volume = Float(volume)
         setupTimeObserver()
         setupRemoteCommands()
     }
 
-    func configure(appState: AppState, settings: AppSettings, cache: CacheService, history: ListeningHistoryStore, lastFM: LastFMService) {
+    func configure(appState: AppState, settings: AppSettings, cache: CacheService, history: ListeningHistoryStore, lastFM: LastFMService, logStore: LogStore) {
         self.appState = appState
         self.appSettings = settings
         self.cacheService = cache
         self.historyStore = history
         self.lastFMService = lastFM
+        self.logStore = logStore
         self.volume = settings.volume
         restoreState()
     }
@@ -68,6 +77,7 @@ final class PlayerService {
     func play(track: SimpleTrack, context: PlaybackContext) {
         let item = QueueItem(track: track, context: context)
         queue = [item]
+        originalQueue = [item]
         queueIndex = 0
         Task { await loadAndPlay(track) }
     }
@@ -120,12 +130,16 @@ final class PlayerService {
     func next() {
         if queueIndex + 1 < queue.count {
             queueIndex += 1
-        } else if repeatMode == .all {
+        } else if repeatMode == .all, !queue.isEmpty {
             queueIndex = 0
         } else {
             return
         }
-        Task { await loadAndPlay(queue[queueIndex].track) }
+        guard let item = queue[safe: queueIndex] else {
+            isPlaying = false
+            return
+        }
+        Task { await loadAndPlay(item.track) }
     }
 
     func toggleShuffle() {
@@ -182,6 +196,9 @@ final class PlayerService {
     // MARK: - Stream Resolution
 
     private func loadAndPlay(_ track: SimpleTrack) async {
+        loadGeneration += 1
+        let generation = loadGeneration
+
         currentTrack = track
         currentTime = 0
         duration = Double(track.duration)
@@ -194,9 +211,17 @@ final class PlayerService {
         let quality = appSettings?.preferredQuality ?? .high
 
         do {
-            guard let cache = cacheService else { return }
+            guard let cache = cacheService else {
+                logStore?.appendLocal(operation: "loadAndPlay \(track.id)", error: "CacheService недоступен")
+                return
+            }
             let urlString = try await cache.resolveStreamURL(trackId: track.id, quality: quality)
-            guard let url = URL(string: urlString) else { return }
+            // Пользователь мог переключить трек, пока резолвился URL — не подменяем актуальный плейбэк.
+            guard generation == loadGeneration else { return }
+            guard let url = URL(string: urlString) else {
+                logStore?.appendLocal(operation: "loadAndPlay \(track.id)", error: "Некорректный URL потока: \(urlString)")
+                return
+            }
 
             let item = AVPlayerItem(url: url)
             observePlayerItem(item)
@@ -205,8 +230,67 @@ final class PlayerService {
             isPlaying = true
             updateNowPlayingInfo()
         } catch {
+            guard generation == loadGeneration else { return }
             isPlaying = false
+            logStore?.appendLocal(operation: "loadAndPlay \(track.id)", error: "\(error)")
         }
+    }
+
+    /// Останавливает воспроизведение и полностью очищает очередь/сохранённое состояние (при logout).
+    func stopAndClear() {
+        loadGeneration += 1
+        player.pause()
+        player.replaceCurrentItem(with: nil)
+        if let endObserver {
+            NotificationCenter.default.removeObserver(endObserver)
+            self.endObserver = nil
+        }
+        statusObserver?.invalidate()
+        statusObserver = nil
+        isPlaying = false
+        currentTrack = nil
+        queue = []
+        originalQueue = []
+        queueIndex = 0
+        currentTime = 0
+        duration = 0
+        UserDefaults.standard.removeObject(forKey: Self.stateKey)
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
+
+    /// Удаляет текущий («не нравится») трек из очереди и продолжает со следующего.
+    func dislikeCurrentAndAdvance(trackId: String) {
+        // Трек мог смениться, пока выполнялся hideTrack — тогда просто убираем его из очередей.
+        guard queue.indices.contains(queueIndex), queue[queueIndex].track.id == trackId else {
+            queue.removeAll { $0.track.id == trackId }
+            originalQueue.removeAll { $0.track.id == trackId }
+            if queueIndex >= queue.count { queueIndex = max(0, queue.count - 1) }
+            saveState()
+            return
+        }
+
+        queue.remove(at: queueIndex)
+        originalQueue.removeAll { $0.track.id == trackId }
+
+        guard !queue.isEmpty else {
+            stopAndClear()
+            return
+        }
+        if queueIndex >= queue.count {
+            guard repeatMode == .all else {
+                // Был последним — останавливаемся в конце.
+                queueIndex = queue.count - 1
+                player.pause()
+                isPlaying = false
+                currentTime = 0
+                updateNowPlayingPlaybackState()
+                saveState()
+                return
+            }
+            queueIndex = 0
+        }
+        saveState()
+        Task { await loadAndPlay(queue[queueIndex].track) }
     }
 
     // MARK: - Time Observer
@@ -243,8 +327,11 @@ final class PlayerService {
             }
         }
 
-        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
-        NotificationCenter.default.addObserver(
+        // block-based observer не снимается через removeObserver(self,...) — храним токен и снимаем по нему.
+        if let endObserver {
+            NotificationCenter.default.removeObserver(endObserver)
+        }
+        endObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: item,
             queue: .main
@@ -299,6 +386,7 @@ final class PlayerService {
             isPlaying = false
             currentTime = 0
             updateNowPlayingPlaybackState()
+            logStore?.appendLocal(operation: "loadMoreWave", error: "\(error)")
         }
     }
 

@@ -44,6 +44,9 @@ final class NewsViewModel {
     @ObservationIgnored
     private var playAllTask: Task<Void, Never>?
 
+    @ObservationIgnored
+    private var collectGeneration = 0
+
     var isCollecting: Bool { collectProgress != nil }
 
     var canPlayAll: Bool {
@@ -96,11 +99,16 @@ final class NewsViewModel {
     /// чтобы фоновые батчи не дописывались в чужой playback.
     func playAll(cacheService: CacheService, playerService: PlayerService) {
         playAllTask?.cancel()
+        // Новое поколение: прогресс отменённой задачи не должен блокировать старт нового сбора
+        // (её defer выполнится позже) и не должен обнулять прогресс нового.
+        collectGeneration += 1
+        let generation = collectGeneration
+        collectProgress = nil
         let context = PlaybackContext.news(tab: selectedTab)
         playAllTask = Task { [weak self] in
             guard let self else { return }
             var hasStarted = false
-            await self.collectTracks(cacheService: cacheService) { batch in
+            await self.collectTracks(generation: generation, cacheService: cacheService) { batch in
                 if hasStarted, playerService.queue.first?.context != context {
                     self.cancelPlayAll()
                     return
@@ -125,21 +133,21 @@ final class NewsViewModel {
     /// Дёргает CacheService последовательно — параллелить запросы к Zvuk API запрещено.
     /// Per-item ошибки молча проглатываются, транспорт логирует их в LogStore.
     func collectTracks(
+        generation: Int,
         cacheService: CacheService,
         onBatch: @MainActor ([SimpleTrack]) -> Void
     ) async {
-        guard !isCollecting else { return }
-
         let playable = notifications.filter(Self.isPlayable)
         guard !playable.isEmpty else { return }
 
         collectProgress = CollectProgress(current: 0, total: playable.count)
-        defer { collectProgress = nil }
+        // Чистим прогресс только если он всё ещё наш — иначе затрём более новый сбор.
+        defer { if generation == collectGeneration { collectProgress = nil } }
 
         for (index, notification) in playable.enumerated() {
-            if Task.isCancelled { return }
+            if Task.isCancelled || generation != collectGeneration { return }
             let batch = await Self.fetchTracks(for: notification, cacheService: cacheService)
-            if Task.isCancelled { return }
+            if Task.isCancelled || generation != collectGeneration { return }
             if !batch.isEmpty {
                 onBatch(batch)
             }

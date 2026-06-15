@@ -1,8 +1,10 @@
 import Foundation
+import os.log
 import Security
 
 enum KeychainHelper {
     private static let service = "ru.korenskoy.zvuk-unofficial"
+    private static let log = Logger(subsystem: "ru.korenskoy.zvuk-unofficial", category: "Keychain")
 
     static func save(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }
@@ -17,7 +19,11 @@ enum KeychainHelper {
 
         var attributes = query
         attributes[kSecValueData as String] = data
-        SecItemAdd(attributes as CFDictionary, nil)
+        attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        let status = SecItemAdd(attributes as CFDictionary, nil)
+        if status != errSecSuccess {
+            log.error("Не удалось сохранить в Keychain (\(key, privacy: .public)): OSStatus \(status)")
+        }
     }
 
     static func load(key: String) -> String? {

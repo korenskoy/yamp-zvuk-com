@@ -27,7 +27,10 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         }
         .task(id: url) {
             guard let url else { return }
-            nsImage = await ImageCacheService.shared.image(for: url)
+            let image = await ImageCacheService.shared.image(for: url)
+            // Задача отменяется при смене url — не затираем картинку нового url результатом старого.
+            guard !Task.isCancelled else { return }
+            nsImage = image
         }
     }
 }

@@ -21,10 +21,25 @@ final class CollectionService {
     @ObservationIgnored
     private weak var settings: AppSettings?
 
-    func configure(cache: CacheService, lastFM: LastFMService, settings: AppSettings) {
+    @ObservationIgnored
+    private weak var logStore: LogStore?
+
+    func configure(cache: CacheService, lastFM: LastFMService, settings: AppSettings, logStore: LogStore) {
         self.cache = cache
         self.lastFM = lastFM
         self.settings = settings
+        self.logStore = logStore
+    }
+
+    /// Сбрасывает состояние коллекции при logout, чтобы лайки прежнего аккаунта не утекали в новую сессию.
+    func reset() {
+        likedTrackIDs = []
+        likedArtistIDs = []
+        likedReleaseIDs = []
+        likedPlaylistIDs = []
+        playlistsVersion = 0
+        isLoaded = false
+        appError = nil
     }
 
     func bumpPlaylistsVersion() { playlistsVersion += 1 }
@@ -57,11 +72,19 @@ final class CollectionService {
 
         if wasLiked {
             likedTrackIDs.remove(id)
-            do { _ = try await client.unlikeTrack(id) } catch { likedTrackIDs.insert(id); return }
+            do { _ = try await client.unlikeTrack(id) } catch {
+                likedTrackIDs.insert(id)
+                logStore?.appendLocal(operation: "unlikeTrack \(id)", error: "\(error)")
+                return
+            }
             if settings?.isScrobblingEnabled == true { lastFM?.unloveTrack(track) }
         } else {
             likedTrackIDs.insert(id)
-            do { _ = try await client.likeTrack(id) } catch { likedTrackIDs.remove(id); return }
+            do { _ = try await client.likeTrack(id) } catch {
+                likedTrackIDs.remove(id)
+                logStore?.appendLocal(operation: "likeTrack \(id)", error: "\(error)")
+                return
+            }
             if settings?.isScrobblingEnabled == true { lastFM?.loveTrack(track) }
         }
         cache?.invalidateLikedTracks()
@@ -73,10 +96,16 @@ final class CollectionService {
         guard let client else { return }
         if likedArtistIDs.contains(id) {
             likedArtistIDs.remove(id)
-            do { _ = try await client.unlikeArtist(id) } catch { likedArtistIDs.insert(id) }
+            do { _ = try await client.unlikeArtist(id) } catch {
+                likedArtistIDs.insert(id)
+                logStore?.appendLocal(operation: "unlikeArtist \(id)", error: "\(error)")
+            }
         } else {
             likedArtistIDs.insert(id)
-            do { _ = try await client.likeArtist(id) } catch { likedArtistIDs.remove(id) }
+            do { _ = try await client.likeArtist(id) } catch {
+                likedArtistIDs.remove(id)
+                logStore?.appendLocal(operation: "likeArtist \(id)", error: "\(error)")
+            }
         }
     }
 
@@ -86,10 +115,16 @@ final class CollectionService {
         guard let client else { return }
         if likedPlaylistIDs.contains(id) {
             likedPlaylistIDs.remove(id)
-            do { _ = try await client.unlikePlaylist(id) } catch { likedPlaylistIDs.insert(id) }
+            do { _ = try await client.unlikePlaylist(id) } catch {
+                likedPlaylistIDs.insert(id)
+                logStore?.appendLocal(operation: "unlikePlaylist \(id)", error: "\(error)")
+            }
         } else {
             likedPlaylistIDs.insert(id)
-            do { _ = try await client.likePlaylist(id) } catch { likedPlaylistIDs.remove(id) }
+            do { _ = try await client.likePlaylist(id) } catch {
+                likedPlaylistIDs.remove(id)
+                logStore?.appendLocal(operation: "likePlaylist \(id)", error: "\(error)")
+            }
         }
         cache?.invalidateUserPlaylists()
         bumpPlaylistsVersion()
@@ -101,10 +136,16 @@ final class CollectionService {
         guard let client else { return }
         if likedReleaseIDs.contains(id) {
             likedReleaseIDs.remove(id)
-            do { _ = try await client.unlikeRelease(id) } catch { likedReleaseIDs.insert(id) }
+            do { _ = try await client.unlikeRelease(id) } catch {
+                likedReleaseIDs.insert(id)
+                logStore?.appendLocal(operation: "unlikeRelease \(id)", error: "\(error)")
+            }
         } else {
             likedReleaseIDs.insert(id)
-            do { _ = try await client.likeRelease(id) } catch { likedReleaseIDs.remove(id) }
+            do { _ = try await client.likeRelease(id) } catch {
+                likedReleaseIDs.remove(id)
+                logStore?.appendLocal(operation: "likeRelease \(id)", error: "\(error)")
+            }
         }
     }
 }

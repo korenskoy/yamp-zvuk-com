@@ -54,6 +54,17 @@ final class AppState {
     private var newsPollingTask: Task<Void, Never>?
     private static let newsPollingInterval: Duration = .seconds(6 * 60 * 60)
 
+    @ObservationIgnored
+    private weak var collectionService: CollectionService?
+    @ObservationIgnored
+    private weak var playerService: PlayerService?
+
+    /// Связывает AppState с сервисами, состоянием которых он управляет при login/logout.
+    func configureServices(collection: CollectionService, player: PlayerService) {
+        self.collectionService = collection
+        self.playerService = player
+    }
+
     func restoreSession() async {
         guard !isAuthenticated else { return }
 
@@ -97,6 +108,7 @@ final class AppState {
         self.client = ZvukClient(token: token, rateLimit: 5)
         self.currentUser = profile
         self.isAuthenticated = true
+        await collectionService?.loadCollection(client: client)
         await checkUnreadNews()
         startNewsPolling()
     }
@@ -104,6 +116,8 @@ final class AppState {
     func logout() {
         stopNewsPolling()
         authService.clearToken()
+        playerService?.stopAndClear()
+        collectionService?.reset()
         self.client = nil
         self.currentUser = nil
         self.isAuthenticated = false
@@ -148,6 +162,9 @@ final class AppState {
     private func restoreDestination() {
         guard let data = UserDefaults.standard.data(forKey: "lastDestination"),
               let dest = try? JSONDecoder().decode(NavigationDestination.self, from: data) else { return }
+        // Восстановление стартовой вкладки — не навигация: не должно попадать в backStack.
+        isNavigatingHistory = true
         selectedDestination = dest
+        isNavigatingHistory = false
     }
 }

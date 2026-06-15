@@ -27,8 +27,8 @@ struct ShareButton: View {
     }
 
     private func copy() {
-        guard let target else { return }
-        ShareService.copyToPasteboard(ShareService.url(for: target))
+        guard let target, let url = ShareService.url(for: target) else { return }
+        ShareService.copyToPasteboard(url)
         withAnimation(.easeInOut(duration: 0.2)) { copied = true }
         Task {
             try? await Task.sleep(for: .seconds(1.2))

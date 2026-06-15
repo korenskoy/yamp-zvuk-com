@@ -54,6 +54,7 @@ final class CacheService {
     private var hiddenCollection: CacheEntry<HiddenCollection>?
     private var recommendations: CacheEntry<DynamicBlock>?
     private var recommendationsInflight: Task<DynamicBlock, Error>?
+    private var recommendationsInflightGeneration = 0
     private var grids: [String: CacheEntry<GridPage>] = [:]
 
     func configure(appState: AppState) {
@@ -280,8 +281,11 @@ final class CacheService {
         } catch let error as ZvukError {
             if case .subscriptionRequired = error {
                 let url = try await client.getStreamURL(trackId, quality: .mid)
-                let fallbackKey = "\(trackId)_mid"
-                streams[fallbackKey] = CacheEntry(value: url, insertedAt: Date(), ttl: TTL.stream)
+                // Кэшируем и под запрошенным ключом, и под mid — иначе каждый плей трека без подписки
+                // повторяет полный цикл (direct → запрошенное качество → mid).
+                streams[key] = CacheEntry(value: url, insertedAt: Date(), ttl: TTL.stream)
+                streams["\(trackId)_mid"] = CacheEntry(value: url, insertedAt: Date(), ttl: TTL.stream)
+                evictIfNeeded(&streams, max: Limits.streams)
                 return url
             }
             throw error
@@ -360,9 +364,12 @@ final class CacheService {
         if let inflight = recommendationsInflight {
             return try await inflight.value
         }
+        recommendationsInflightGeneration += 1
+        let generation = recommendationsInflightGeneration
         let task = Task { try await performLoadAllRecommendations() }
         recommendationsInflight = task
-        defer { recommendationsInflight = nil }
+        // Очищаем только свою задачу: отменённый/перезапущенный вызов не должен обнулять чужой inflight.
+        defer { if recommendationsInflightGeneration == generation { recommendationsInflight = nil } }
         return try await task.value
     }
 
@@ -412,6 +419,7 @@ final class CacheService {
     func invalidateRecommendations() {
         recommendationsInflight?.cancel()
         recommendationsInflight = nil
+        recommendationsInflightGeneration += 1
         recommendations = nil
         deletePersistedRecommendations()
     }
@@ -511,6 +519,7 @@ final class CacheService {
         editorialPlaylistIDs = nil
         recommendationsInflight?.cancel()
         recommendationsInflight = nil
+        recommendationsInflightGeneration += 1
         recommendations = nil
         deletePersistedRecommendations()
         hiddenCollection = nil

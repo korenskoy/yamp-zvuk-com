@@ -47,7 +47,7 @@ final class SearchViewModel {
 
     private var searchTask: Task<Void, Never>?
     private var categoryTask: Task<Void, Never>?
-    private var loadMoreTask: Task<Void, Never>?
+    private var loadMoreTasks: [SearchTab: Task<Void, Never>] = [:]
     private var lastQuery = ""
 
     var autocompleteSuggestion: String? {
@@ -118,8 +118,12 @@ final class SearchViewModel {
             isQuickSearching = true
             defer { isQuickSearching = false }
 
-            lastQuery = trimmed
-            resetCategoryState()
+            // Сбрасываем категории только при реальной смене запроса — иначе затрём результаты,
+            // уже загруженные через onSubmit (Enter до срабатывания debounce).
+            if lastQuery != trimmed {
+                lastQuery = trimmed
+                resetCategoryState()
+            }
 
             do {
                 let result = try await client.quickSearch(trimmed, limit: 20)
@@ -141,6 +145,12 @@ final class SearchViewModel {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 2 else { return }
         hasSearched = true
+        // Enter может опередить debounce — фиксируем актуальный запрос синхронно,
+        // чтобы loadCurrentTab не искал по устаревшему/пустому lastQuery.
+        if trimmed != lastQuery {
+            lastQuery = trimmed
+            resetCategoryState()
+        }
         if selectedTab != .top {
             loadCurrentTab(client: client)
         }
@@ -162,7 +172,8 @@ final class SearchViewModel {
         let searchQuery = lastQuery
         loadingMoreTabs.insert(tab)
 
-        loadMoreTask = Task {
+        loadMoreTasks[tab]?.cancel()
+        loadMoreTasks[tab] = Task {
             defer { loadingMoreTabs.remove(tab) }
             do {
                 try await fetchTab(tab, query: searchQuery, client: client, append: true)
@@ -185,8 +196,8 @@ final class SearchViewModel {
     // MARK: - Private
 
     private func resetCategoryState() {
-        loadMoreTask?.cancel()
-        loadMoreTask = nil
+        for task in loadMoreTasks.values { task.cancel() }
+        loadMoreTasks.removeAll()
         tracks = []; artists = []; releases = []
         playlists = []; podcasts = []
         tracksCursor = nil; artistsCursor = nil; releasesCursor = nil

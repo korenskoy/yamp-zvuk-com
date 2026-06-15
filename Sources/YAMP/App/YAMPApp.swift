@@ -49,9 +49,10 @@ struct YAMPApp: App {
                 guard !appState.isAuthenticated else { return }
 
                 lastFMService.configure(logStore: logStore)
-                playerService.configure(appState: appState, settings: appSettings, cache: cacheService, history: historyStore, lastFM: lastFMService)
+                playerService.configure(appState: appState, settings: appSettings, cache: cacheService, history: historyStore, lastFM: lastFMService, logStore: logStore)
                 cacheService.configure(appState: appState)
-                collectionService.configure(cache: cacheService, lastFM: lastFMService, settings: appSettings)
+                collectionService.configure(cache: cacheService, lastFM: lastFMService, settings: appSettings, logStore: logStore)
+                appState.configureServices(collection: collectionService, player: playerService)
                 await appState.restoreSession()
                 logStore.attach(to: appState.client)
                 if appState.isAuthenticated {

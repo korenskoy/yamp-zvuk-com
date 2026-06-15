@@ -75,6 +75,12 @@ final class UpdateService {
                 return
             }
             let current = AppVersion.marketing
+            // Если текущую версию определить не удалось ("?"), не предлагаем обновление —
+            // иначе любая версия из фида покажется новее.
+            guard current.first?.isNumber == true else {
+                Self.log.error("Не удалось определить текущую версию приложения — пропускаем проверку обновлений")
+                return
+            }
             if Self.compareSemver(latest.version, current) == .orderedDescending {
                 Self.log.notice("Update available: \(latest.version, privacy: .public) > \(current, privacy: .public)")
                 let next = AvailableUpdate(version: latest.version, url: latest.url)
@@ -113,8 +119,14 @@ final class UpdateService {
 
     /// Покомпонентное числовое сравнение: "1.2" < "1.2.1" < "1.10".
     nonisolated static func compareSemver(_ lhs: String, _ rhs: String) -> ComparisonResult {
-        let left = lhs.split(separator: ".").map { Int($0) ?? 0 }
-        let right = rhs.split(separator: ".").map { Int($0) ?? 0 }
+        // Берём ведущие цифры каждого компонента: "1.4.0-beta" → [1,4,0], игнорируя суффиксы.
+        func numericComponents(_ version: String) -> [Int] {
+            version.split(separator: ".").map { part in
+                Int(part.prefix { $0.isNumber }) ?? 0
+            }
+        }
+        let left = numericComponents(lhs)
+        let right = numericComponents(rhs)
         let count = max(left.count, right.count)
         for index in 0..<count {
             let lhsPart = index < left.count ? left[index] : 0

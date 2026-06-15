@@ -77,8 +77,10 @@ struct PlayerBarView: View {
 
                         if lastFMService.isConnected && appSettings.isScrobblingEnabled {
                             Button {
-                                if let username = lastFMService.connectedUsername {
-                                    NSWorkspace.shared.open(URL(string: "https://www.last.fm/user/\(username)")!)
+                                if let username = lastFMService.connectedUsername,
+                                   let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+                                   let url = URL(string: "https://www.last.fm/user/\(encoded)") {
+                                    NSWorkspace.shared.open(url)
                                 }
                             } label: {
                                 LastFMIcon()

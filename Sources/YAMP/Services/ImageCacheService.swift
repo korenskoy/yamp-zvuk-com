@@ -8,6 +8,7 @@ actor ImageCacheService {
 
     private let cacheDirectory: URL
     private let maxDiskBytes: Int = 200 * 1024 * 1024 // 200 MB
+    private let maxImageBytes: Int = 20 * 1024 * 1024  // 20 MB на одно изображение
     private let ttl: TimeInterval = 7 * 24 * 60 * 60  // 7 days
     private var memoryCache = NSCache<NSString, NSImage>()
 
@@ -16,6 +17,7 @@ actor ImageCacheService {
         cacheDirectory = caches.appendingPathComponent("ru.korenskoy.zvuk-unofficial.images", isDirectory: true)
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
         memoryCache.countLimit = 300
+        memoryCache.totalCostLimit = 128 * 1024 * 1024 // 128 MB — иначе 300 полноразмерных NSImage могут занять сотни МБ
     }
 
     func image(for url: URL) async -> NSImage? {
@@ -33,7 +35,7 @@ actor ImageCacheService {
            Date().timeIntervalSince(modified) < ttl,
            let data = try? Data(contentsOf: filePath),
            let image = NSImage(data: data) {
-            memoryCache.setObject(image, forKey: key as NSString)
+            memoryCache.setObject(image, forKey: key as NSString, cost: data.count)
             return image
         }
 
@@ -41,12 +43,13 @@ actor ImageCacheService {
         guard let (data, response) = try? await URLSession.shared.data(from: url),
               let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200,
+              data.count <= maxImageBytes,
               let image = NSImage(data: data) else {
             return nil
         }
 
         // Save
-        memoryCache.setObject(image, forKey: key as NSString)
+        memoryCache.setObject(image, forKey: key as NSString, cost: data.count)
         try? data.write(to: filePath, options: .atomic)
 
         // Evict old files in background

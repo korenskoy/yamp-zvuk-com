@@ -20,9 +20,10 @@ final class LyricsViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        guard let result = await lyricsService.fetchLyrics(trackId: trackId, cache: cache) else {
-            return
-        }
+        let result = await lyricsService.fetchLyrics(trackId: trackId, cache: cache)
+        // Трек мог смениться, пока грузился текст — не подменяем строки актуального трека.
+        guard loadedTrackId == trackId else { return }
+        guard let result else { return }
         lines = result.lines
         isSynced = result.isSynced
     }

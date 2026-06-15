@@ -70,7 +70,7 @@ struct PlayerControlsView: View {
                 } catch {
                     appError = AppError.from(error)
                 }
-                playerService.next()
+                playerService.dislikeCurrentAndAdvance(trackId: track.id)
             }
         } label: {
             Image(systemName: "hand.thumbsdown")
