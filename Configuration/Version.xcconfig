@@ -1,7 +1,7 @@
 // MARKETING_VERSION — пользовательская версия (semver), правится вручную при релизе.
 // CURRENT_PROJECT_VERSION — build number, инкрементится автоматически в scripts/build-dmg.sh.
-MARKETING_VERSION = 1.3.3
-CURRENT_PROJECT_VERSION = 139
+MARKETING_VERSION = 1.3.4
+CURRENT_PROJECT_VERSION = 140
 
 // Секреты (Last.fm API key/secret) — не в git. Заполняются в Configuration/Secrets.xcconfig
 // (шаблон — Secrets.example.xcconfig). "#include?" не падает, если файл отсутствует.
