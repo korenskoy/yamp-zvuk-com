@@ -16,6 +16,7 @@ struct SidebarView: View {
     @Environment(CacheService.self) private var cacheService
     @Environment(CollectionService.self) private var collectionService
     @Environment(UpdateService.self) private var updateService
+    @Environment(LastFMService.self) private var lastFMService
     @State private var playlistsVM = PlaylistsViewModel()
 
     var body: some View {
@@ -94,7 +95,7 @@ struct SidebarView: View {
                         "Настройки",
                         icon: "gearshape",
                         destination: .settings,
-                        badge: updateService.availableUpdate != nil
+                        badge: updateService.availableUpdate != nil || lastFMService.sessionInvalidated
                     )
                 }
                 .padding(.vertical, 8)

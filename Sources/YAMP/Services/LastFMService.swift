@@ -3,6 +3,16 @@ import Foundation
 import LastFM
 import ZvukMusic
 
+/// Скроббл, не доехавший до Last.fm — хранится на диске до успешной отправки.
+/// Sendable (только value-типы), чтобы безопасно передавать в nonisolated API-обёртку.
+private struct PendingScrobble: Codable, Sendable {
+    let artist: String
+    let track: String
+    let album: String?
+    let duration: UInt
+    let timestamp: UInt // seconds since epoch — время начала прослушивания
+}
+
 @MainActor
 @Observable
 final class LastFMService {
@@ -12,6 +22,17 @@ final class LastFMService {
     private(set) var connectionState: ConnectionState = .disconnected
     private(set) var scrobbleState: ScrobbleState = .idle
     private(set) var connectedUsername: String?
+    private(set) var sessionInvalidated = false
+    /// Сколько прослушанных треков ждут отправки (накопились, пока сессия была недействительна).
+    private(set) var pendingScrobbleCount = 0
+
+    @ObservationIgnored
+    private var pending: [PendingScrobble] = [] {
+        didSet { pendingScrobbleCount = pending.count }
+    }
+
+    @ObservationIgnored
+    private var isFlushing = false
 
     @ObservationIgnored
     private let apiClient = LastFMAPIClient()
@@ -33,14 +54,26 @@ final class LastFMService {
     private static let keychainSessionKey = "sessionKey"
     private static let keychainUsername = "username"
 
+    @ObservationIgnored
+    private lazy var pendingFileURL: URL = {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let dir = appSupport.appendingPathComponent("YAMP", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("lastfm_pending_scrobbles.json")
+    }()
+
     func configure(logStore: LogStore) {
         self.logStore = logStore
         restoreSession()
+        loadPending()
+        // Пробуем разгрести накопленный бэклог сразу при старте, если сессия восстановилась.
+        Task { await flushPending() }
     }
 
     // MARK: - Authentication
 
     func connect() {
+        sessionInvalidated = false
         connectionState = .connecting
         Task {
             let start = Date()
@@ -74,6 +107,7 @@ final class LastFMService {
                         connectedUsername = session.name
                         connectionState = .connected
                         saveSession(key: session.key, username: session.name)
+                        await flushPending()
                         return
                     } catch {
                         logStore?.appendLastFM(
@@ -98,10 +132,18 @@ final class LastFMService {
         connectedUsername = nil
         connectionState = .disconnected
         scrobbleState = .idle
+        sessionInvalidated = false
         deleteSession()
     }
 
     var isConnected: Bool { connectionState == .connected && sessionKey != nil }
+
+    /// Взводит флаг разлогина, если Last.fm вернул код 9 (недействительная сессия).
+    private func flagIfInvalidSession(_ error: Error) {
+        if case LastFMError.LastFMServiceError(.InvalidSessionKey, _) = error {
+            sessionInvalidated = true
+        }
+    }
 
     // MARK: - Now Playing
 
@@ -134,6 +176,7 @@ final class LastFMService {
                     duration: Date().timeIntervalSince(start),
                     error: error.localizedDescription, requestBody: body
                 )
+                flagIfInvalidSession(error)
             }
         }
     }
@@ -179,13 +222,78 @@ final class LastFMService {
                 if accepted > 0 {
                     scrobbleState = .scrobbled
                 }
+                // Успешно — заодно разгребаем накопленный бэклог.
+                await flushPending()
             } catch {
                 logStore?.appendLastFM(
                     method: "POST", url: "last.fm/track.scrobble", statusCode: nil,
                     duration: Date().timeIntervalSince(start),
                     error: error.localizedDescription, requestBody: body
                 )
+                flagIfInvalidSession(error)
+                // Не теряем прослушанное — откладываем до следующей успешной отправки.
+                enqueuePending(artist: artist, track: title, album: album, duration: dur, date: timestamp)
             }
+        }
+    }
+
+    // MARK: - Offline scrobble queue
+
+    private func enqueuePending(artist: String, track: String, album: String?, duration: UInt, date: Date) {
+        pending.append(PendingScrobble(
+            artist: artist, track: track, album: album,
+            duration: duration, timestamp: UInt(date.timeIntervalSince1970)
+        ))
+        savePending()
+    }
+
+    /// Отправляет отложенные скробблы батчами по 50. Отправленные удаляет; при ошибке останавливается,
+    /// остаток ждёт следующего раза.
+    private func flushPending() async {
+        guard !isFlushing, isConnected, let key = sessionKey, !pending.isEmpty else { return }
+        isFlushing = true
+        defer { isFlushing = false }
+
+        while !pending.isEmpty {
+            let batch = Array(pending.prefix(50))
+            let start = Date()
+            do {
+                let accepted = try await apiClient.scrobbleBatch(items: batch, sessionKey: key)
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.scrobble", statusCode: 200,
+                    duration: Date().timeIntervalSince(start), error: nil,
+                    requestBody: "{\"method\":\"track.scrobble\",\"batch\":\(batch.count)}"
+                )
+                if accepted > 0 { scrobbleState = .scrobbled }
+                pending.removeFirst(batch.count)
+                savePending()
+            } catch {
+                logStore?.appendLastFM(
+                    method: "POST", url: "last.fm/track.scrobble", statusCode: nil,
+                    duration: Date().timeIntervalSince(start),
+                    error: error.localizedDescription,
+                    requestBody: "{\"method\":\"track.scrobble\",\"batch\":\(batch.count)}"
+                )
+                flagIfInvalidSession(error)
+                return
+            }
+        }
+    }
+
+    private func loadPending() {
+        guard let data = try? Data(contentsOf: pendingFileURL) else { return }
+        pending = (try? JSONDecoder().decode([PendingScrobble].self, from: data)) ?? []
+    }
+
+    private func savePending() {
+        do {
+            let data = try JSONEncoder().encode(pending)
+            try data.write(to: pendingFileURL, options: .atomic)
+        } catch {
+            logStore?.appendLastFM(
+                method: "FILE", url: "lastfm_pending_scrobbles.json", statusCode: nil,
+                duration: 0, error: error.localizedDescription
+            )
         }
     }
 
@@ -211,6 +319,7 @@ final class LastFMService {
                     duration: Date().timeIntervalSince(start),
                     error: error.localizedDescription, requestBody: body
                 )
+                flagIfInvalidSession(error)
             }
         }
     }
@@ -235,6 +344,7 @@ final class LastFMService {
                     duration: Date().timeIntervalSince(start),
                     error: error.localizedDescription, requestBody: body
                 )
+                flagIfInvalidSession(error)
             }
         }
     }
@@ -351,6 +461,19 @@ private final class LastFMAPIClient: Sendable {
     func scrobble(artist: String, track: String, album: String?, duration: UInt, date: Date, sessionKey: String) async throws -> UInt {
         var params = ScrobbleParams()
         try params.addItem(item: ScrobbleParamItem(artist: artist, track: track, date: date, album: album, duration: duration))
+        let result = try await lastFM.Track.scrobble(params: params, sessionKey: sessionKey)
+        return result.accepted
+    }
+
+    /// Батч-скроббл (до 50 позиций за запрос). Timestamp'ы уже проставлены в каждом элементе.
+    func scrobbleBatch(items: [PendingScrobble], sessionKey: String) async throws -> UInt {
+        var params = ScrobbleParams()
+        for item in items {
+            try params.addItem(item: ScrobbleParamItem(
+                artist: item.artist, track: item.track, timestamp: item.timestamp,
+                album: item.album, duration: item.duration
+            ))
+        }
         let result = try await lastFM.Track.scrobble(params: params, sessionKey: sessionKey)
         return result.accepted
     }

@@ -68,7 +68,17 @@ struct SettingsView: View {
             }
 
             Section("Last.fm") {
-                if lastFMService.isConnected {
+                if lastFMService.sessionInvalidated {
+                    Label("Сессия Last.fm недействительна — вас разлогинило. Переподключитесь.",
+                          systemImage: "exclamationmark.triangle.fill")
+                        .font(.callout)
+                        .foregroundStyle(.red)
+
+                    Button("Переподключить Last.fm") {
+                        lastFMService.connect()
+                    }
+                    .disabled(lastFMService.connectionState == .connecting)
+                } else if lastFMService.isConnected {
                     LabeledContent("Аккаунт", value: lastFMService.connectedUsername ?? "—")
 
                     Toggle("Скробблинг", isOn: $settings.isScrobblingEnabled)
@@ -91,6 +101,12 @@ struct SettingsView: View {
                         }
                     }
                     .disabled(lastFMService.connectionState == .connecting)
+                }
+
+                if lastFMService.pendingScrobbleCount > 0 {
+                    Label("Ждут отправки: \(lastFMService.pendingScrobbleCount)", systemImage: "clock.arrow.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 Text("Скробблинг отправляет информацию о прослушанных треках на Last.fm.")
