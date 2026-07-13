@@ -5,11 +5,12 @@ struct ArtistHeaderView: View {
     let artist: Artist
     let subscriberCount: Int?
     let isSubscribed: Bool
+    let isDisliked: Bool
     let onPlay: () -> Void
     let onShuffle: () -> Void
     let onRadio: () -> Void
     let onToggleSubscribe: () -> Void
-    let onHideArtist: () -> Void
+    let onToggleHidden: () -> Void
 
     @State private var isDescriptionExpanded = false
     @State private var showCover = false
@@ -115,13 +116,13 @@ struct ArtistHeaderView: View {
             .buttonStyle(.plain)
             .help("Радио по артисту")
 
-            Button(action: onHideArtist) {
-                Image(systemName: "hand.thumbsdown")
+            Button(action: onToggleHidden) {
+                Image(systemName: isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown")
                     .font(.title2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isDisliked ? Color.accentColor : .secondary)
             }
             .buttonStyle(.plain)
-            .help("Скрыть артиста")
+            .help(isDisliked ? "Вернуть артиста" : "Скрыть артиста")
 
             ShareButton(target: .artist(id: artist.id))
         }

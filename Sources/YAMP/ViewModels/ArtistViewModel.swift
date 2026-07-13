@@ -7,6 +7,7 @@ final class ArtistViewModel {
     let artistId: String
     var artist: Artist?
     var isLoading = false
+    var isDisliked = false
     var appError: AppError?
 
     var subscriberCount: Int? {
@@ -33,10 +34,16 @@ final class ArtistViewModel {
         }
     }
 
-    func hideArtist(client: ZvukClient?) async {
-        guard let artist else { return }
+    func toggleHidden(client: ZvukClient?, cache: CacheService) async {
+        guard let client else { return }
         do {
-            _ = try await client?.addToHidden(artist.id, type: .artist)
+            if isDisliked {
+                _ = try await client.removeFromHidden(artistId, type: .artist)
+            } else {
+                _ = try await client.addToHidden(artistId, type: .artist)
+            }
+            cache.invalidateHiddenCollection()
+            isDisliked.toggle()
         } catch {
             self.appError = AppError.from(error)
         }
@@ -55,6 +62,7 @@ final class ArtistViewModel {
                 withRelatedArtists: true,
                 withDescription: true
             )
+            isDisliked = (try? await cache.isArtistHidden(artistId)) ?? false
         } catch {
             self.appError = AppError.from(error)
         }

@@ -491,6 +491,13 @@ final class CacheService {
         hiddenCollection = nil
     }
 
+    /// Whether the artist is hidden (disliked). Uses the cached hidden collection,
+    /// which holds only lightweight ids — one request per session.
+    func isArtistHidden(_ id: String) async throws -> Bool {
+        let hidden = try await getHiddenCollection()
+        return hidden.artists.contains { $0.id == id }
+    }
+
     // MARK: - Invalidation
 
     func invalidatePlaylist(_ id: String) {

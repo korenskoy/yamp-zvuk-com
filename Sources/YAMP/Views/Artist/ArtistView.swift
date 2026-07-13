@@ -50,6 +50,7 @@ struct ArtistView: View {
                     artist: artist,
                     subscriberCount: viewModel.subscriberCount,
                     isSubscribed: collectionService.isArtistLiked(artist.id),
+                    isDisliked: viewModel.isDisliked,
                     onPlay: {
                         guard !artist.popularTracks.isEmpty else { return }
                         playerService.playQueue(
@@ -72,8 +73,8 @@ struct ArtistView: View {
                             await collectionService.toggleArtistLike(artist.id, client: appState.client)
                         }
                     },
-                    onHideArtist: {
-                        Task { await viewModel.hideArtist(client: appState.client) }
+                    onToggleHidden: {
+                        Task { await viewModel.toggleHidden(client: appState.client, cache: cacheService) }
                     }
                 )
 
