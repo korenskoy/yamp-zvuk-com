@@ -18,6 +18,21 @@ struct SidebarView: View {
     @Environment(UpdateService.self) private var updateService
     @Environment(LastFMService.self) private var lastFMService
     @State private var playlistsVM = PlaylistsViewModel()
+    @AppStorage("playlistOrder") private var playlistOrderRaw = ""
+
+    // Сохранённый вручную порядок; новые плейлисты добавляются в конец.
+    private var orderedPlaylists: [SimplePlaylist] {
+        let byId = Dictionary(playlistsVM.playlists.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let order = playlistOrderRaw.split(separator: "\n").map(String.init)
+        let known = Set(order)
+        return order.compactMap { byId[$0] } + playlistsVM.playlists.filter { !known.contains($0.id) }
+    }
+
+    private func movePlaylists(from source: IndexSet, to destination: Int) {
+        var items = orderedPlaylists
+        items.move(fromOffsets: source, toOffset: destination)
+        playlistOrderRaw = items.map(\.id).joined(separator: "\n")
+    }
 
     var body: some View {
         @Bindable var state = appState
@@ -56,7 +71,7 @@ struct SidebarView: View {
                         .foregroundStyle(.secondary)
                         .font(.callout)
                 } else {
-                    ForEach(playlistsVM.playlists) { playlist in
+                    ForEach(orderedPlaylists) { playlist in
                         Label(playlist.title, systemImage: "music.note.list")
                             .tag(NavigationDestination.playlist(id: playlist.id))
                             .contextMenu {
@@ -69,6 +84,7 @@ struct SidebarView: View {
                                 }
                             }
                     }
+                    .onMove(perform: movePlaylists)
                 }
             }
         }
