@@ -28,6 +28,8 @@ struct MenuBarPlayerView: View {
         }
         .padding(16)
         .frame(width: 320)
+        // В поповере кнопки ловят фокус и обводятся кольцом — в мини-плеере оно только мешает.
+        .focusEffectDisabled()
         .errorAlert($appError)
     }
 
@@ -87,21 +89,36 @@ struct MenuBarPlayerView: View {
 
     // MARK: - Progress
 
+    /// Своя полоса вместо `Slider`: системный слайдер оставляет кольцо фокуса в точке клика,
+    /// и оно не едет за значением при обновлении времени.
     private var progress: some View {
-        VStack(spacing: 2) {
-            Slider(
-                value: Binding(
-                    get: { seekPosition ?? playerService.currentTime },
-                    set: { seekPosition = $0 }
-                ),
-                in: 0...max(playerService.duration, 1)
-            ) { isEditing in
-                if !isEditing, let position = seekPosition {
-                    playerService.seek(to: position)
-                    seekPosition = nil
+        VStack(spacing: 6) {
+            GeometryReader { geo in
+                let total = max(playerService.duration, 1)
+                let value = seekPosition ?? playerService.currentTime
+                let ratio = min(max(value / total, 0), 1)
+
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(.quaternary)
+                    Capsule()
+                        .fill(Color.accentColor)
+                        .frame(width: geo.size.width * ratio)
                 }
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { gesture in
+                            let position = gesture.location.x / geo.size.width
+                            seekPosition = min(max(position, 0), 1) * total
+                        }
+                        .onEnded { _ in
+                            if let position = seekPosition { playerService.seek(to: position) }
+                            seekPosition = nil
+                        }
+                )
             }
-            .controlSize(.mini)
+            .frame(height: 4)
 
             HStack {
                 Text((seekPosition ?? playerService.currentTime).formattedTime)
