@@ -5,12 +5,13 @@ import ZvukMusic
 /// Элемент плеера в строке меню. Каждый — отдельный `NSStatusItem`:
 /// SwiftUI `MenuBarExtra` рисует label целиком некликабельным, кнопки в нём невозможны.
 enum MenuBarElement: String, CaseIterable, Identifiable {
-    case shuffle, previous, playPause, next, repeatMode, love, title
+    case logo, shuffle, previous, playPause, next, repeatMode, love, title
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
+        case .logo: "Логотип"
         case .shuffle: "Перемешать"
         case .previous: "Предыдущий трек"
         case .playPause: "Играть / Пауза"
@@ -21,7 +22,7 @@ enum MenuBarElement: String, CaseIterable, Identifiable {
         }
     }
 
-    static let defaults: [Self] = [.previous, .playPause, .next, .title]
+    static let defaults: [Self] = [.logo, .previous, .playPause, .next, .title]
 }
 
 /// Чтение/запись списка включённых элементов. Хранится одной CSV-строкой в `UserDefaults`,
@@ -45,6 +46,15 @@ enum MenuBarSettings {
 
     static var isEnabled: Bool {
         UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true
+    }
+
+    static let titleLimitKey = "menuBarTitleLimit"
+    static let defaultTitleLimit = 30
+
+    /// Сколько символов показывать в названии трека: строка меню делится с меню активного
+    /// приложения, и длинный заголовок вытесняет все иконки разом.
+    static var titleLimit: Int {
+        UserDefaults.standard.object(forKey: titleLimitKey) as? Int ?? defaultTitleLimit
     }
 }
 
@@ -78,7 +88,8 @@ final class MenuBarController {
 
     private func rebuildIfSettingsChanged() {
         let wanted = MenuBarSettings.isEnabled ? MenuBarSettings.elements : []
-        guard wanted != entries.map(\.element) else { return }
+        // Набор тот же — могла поменяться только длина названия, хватит перерисовки.
+        guard wanted != entries.map(\.element) else { return refresh() }
         rebuild()
     }
 
@@ -93,6 +104,9 @@ final class MenuBarController {
         // NSStatusItem'ы выстраиваются справа налево, поэтому создаём в обратном порядке.
         for element in MenuBarSettings.elements.reversed() {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            // Без autosaveName macOS не запоминает позицию элемента, и менеджеры строки меню
+            // (Ice, Bartender) при каждом запуске считают его новым и прячут обратно.
+            item.autosaveName = "YAMP.\(element.rawValue)"
             item.button?.target = self
             item.button?.action = #selector(handleClick(_:))
             item.button?.tag = MenuBarElement.allCases.firstIndex(of: element) ?? 0
@@ -122,6 +136,10 @@ final class MenuBarController {
         let track = player.currentTrack
 
         switch element {
+        case .logo:
+            button.image = Self.logoImage
+            button.toolTip = "Плеер"
+
         case .shuffle:
             button.image = symbol("shuffle")
             button.alphaValue = player.isShuffled ? 1 : 0.5
@@ -157,18 +175,26 @@ final class MenuBarController {
         }
     }
 
+    /// SVG в ассетах отдаётся в исходных 1024×1024 — ужимаем под соседние SF Symbols.
+    private static let logoImage: NSImage? = {
+        guard let image = NSImage(named: "MenuBarLogo")?.copy() as? NSImage else { return nil }
+        image.isTemplate = true
+        image.size = NSSize(width: 16, height: 16)
+        return image
+    }()
+
     private func symbol(_ name: String) -> NSImage? {
         let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
         image?.isTemplate = true
         return image
     }
 
-    /// ponytail: обрезаем по фиксированной длине, чтобы плеер не съедал строку меню.
-    /// Если понадобится — вынести лимит в настройки.
     private static func titleText(for track: SimpleTrack) -> String {
         let artists = track.artists.map(\.title).joined(separator: ", ")
         let full = artists.isEmpty ? track.title : "\(artists) — \(track.title)"
-        return full.count > 45 ? full.prefix(44).trimmingCharacters(in: .whitespaces) + "…" : full
+        let limit = MenuBarSettings.titleLimit
+        guard full.count > limit else { return full }
+        return full.prefix(limit - 1).trimmingCharacters(in: .whitespaces) + "…"
     }
 
     // MARK: - Actions
@@ -183,7 +209,7 @@ final class MenuBarController {
         case .next: player.next()
         case .repeatMode: player.cycleRepeatMode()
         case .love: toggleLove()
-        case .title: togglePopover(from: sender)
+        case .logo, .title: togglePopover(from: sender)
         }
     }
 

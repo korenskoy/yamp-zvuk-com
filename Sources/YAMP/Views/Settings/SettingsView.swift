@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(MenuBarSettings.enabledKey) private var isMenuBarPlayerEnabled = true
     @AppStorage(MenuBarSettings.elementsKey)
     private var menuBarElementsRaw = MenuBarElement.defaults.map(\.rawValue).joined(separator: ",")
+    @AppStorage(MenuBarSettings.titleLimitKey) private var menuBarTitleLimit = MenuBarSettings.defaultTitleLimit
 
     @State private var subscription: Subscription?
     @State private var featuredInfo: FeaturedInfo?
@@ -78,6 +79,16 @@ struct SettingsView: View {
                         Toggle(element.label, isOn: binding(for: element))
                     }
                     .padding(.leading, 20)
+
+                    Stepper(value: $menuBarTitleLimit, in: 10...60, step: 5) {
+                        Text("Длина названия: \(menuBarTitleLimit) символов")
+                    }
+                    .padding(.leading, 20)
+
+                    Text("Строка меню делится с меню активного приложения — длинное название вытесняет иконки.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 20)
                 }
             }
 
