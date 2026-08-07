@@ -8,6 +8,9 @@ struct SettingsView: View {
     @Environment(LastFMService.self) private var lastFMService
     @Environment(UpdateService.self) private var updateService
     @Environment(\.openURL) private var openURL
+    @AppStorage(MenuBarSettings.enabledKey) private var isMenuBarPlayerEnabled = true
+    @AppStorage(MenuBarSettings.elementsKey)
+    private var menuBarElementsRaw = MenuBarElement.defaults.map(\.rawValue).joined(separator: ",")
 
     @State private var subscription: Subscription?
     @State private var featuredInfo: FeaturedInfo?
@@ -65,6 +68,17 @@ struct SettingsView: View {
                 Text("Высокое качество и FLAC требуют платную подписку Zvuk.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            Section("Строка меню") {
+                Toggle("Показывать плеер в строке меню", isOn: $isMenuBarPlayerEnabled)
+
+                if isMenuBarPlayerEnabled {
+                    ForEach(MenuBarElement.allCases) { element in
+                        Toggle(element.label, isOn: binding(for: element))
+                    }
+                    .padding(.leading, 20)
+                }
             }
 
             Section("Last.fm") {
@@ -179,6 +193,20 @@ struct SettingsView: View {
             updateActionButton
         }
         .padding(.vertical, 4)
+    }
+
+    private func binding(for element: MenuBarElement) -> Binding<Bool> {
+        Binding(
+            get: { menuBarElementsRaw.split(separator: ",").contains(Substring(element.rawValue)) },
+            set: { isOn in
+                var selected = Set(menuBarElementsRaw.split(separator: ",").map(String.init))
+                if isOn { selected.insert(element.rawValue) } else { selected.remove(element.rawValue) }
+                menuBarElementsRaw = MenuBarElement.allCases
+                    .filter { selected.contains($0.rawValue) }
+                    .map(\.rawValue)
+                    .joined(separator: ",")
+            }
+        )
     }
 
     private var updateStatusColor: Color {

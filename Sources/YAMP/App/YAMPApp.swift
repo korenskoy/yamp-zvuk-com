@@ -15,6 +15,7 @@ struct YAMPApp: App {
     @State private var historyStore = ListeningHistoryStore()
     @State private var lastFMService = LastFMService()
     @State private var updateService = UpdateService()
+    @State private var menuBarController = MenuBarController()
 
     var body: some Scene {
         WindowGroup {
@@ -45,6 +46,7 @@ struct YAMPApp: App {
                 UserDefaults.standard.set("WhenScrolling", forKey: "AppleShowScrollBars")
 
                 updateService.start()
+                menuBarController.configure(player: playerService, collection: collectionService, appState: appState)
 
                 guard !appState.isAuthenticated else { return }
 
