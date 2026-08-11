@@ -23,8 +23,12 @@ enum ShareService {
     }
 
     static func copyToPasteboard(_ url: URL) {
+        copyToPasteboard(url.absoluteString)
+    }
+
+    static func copyToPasteboard(_ text: String) {
         let pb = NSPasteboard.general
         pb.clearContents()
-        pb.setString(url.absoluteString, forType: .string)
+        pb.setString(text, forType: .string)
     }
 }

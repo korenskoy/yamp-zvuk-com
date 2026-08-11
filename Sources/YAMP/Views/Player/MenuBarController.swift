@@ -60,19 +60,33 @@ enum MenuBarSettings {
 
 @MainActor
 final class MenuBarController {
-    private var entries: [(element: MenuBarElement, item: NSStatusItem)] = []
+    private var items: [MenuBarElement: NSStatusItem] = [:]
     private var popover: NSPopover?
+    /// Настройки, уже применённые к строке меню.
+    private var appliedSettings: Settings?
 
     private var player: PlayerService?
     private var collection: CollectionService?
     private weak var appState: AppState?
+
+    /// Снимок настроек, влияющих на строку меню.
+    ///
+    /// `UserDefaults.didChangeNotification` — это поток *всех* записей в
+    /// defaults: громкость, состояние плеера, порядок плейлистов. Сравнение со
+    /// снимком отсекает чужие записи, а заодно делает рекурсию невозможной —
+    /// `isVisible` ниже пишет в defaults, но в снимок не входит.
+    private struct Settings: Equatable {
+        let isEnabled = MenuBarSettings.isEnabled
+        let elements = MenuBarSettings.elements
+        let titleLimit = MenuBarSettings.titleLimit
+    }
 
     func configure(player: PlayerService, collection: CollectionService, appState: AppState) {
         self.player = player
         self.collection = collection
         self.appState = appState
 
-        rebuild()
+        applySettings()
         observePlayer()
 
         NotificationCenter.default.addObserver(
@@ -80,40 +94,40 @@ final class MenuBarController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.rebuildIfSettingsChanged() }
+            MainActor.assumeIsolated { self?.applySettings() }
         }
+    }
+
+    /// Перерисовывает строку меню, только если поменялись именно её настройки.
+    private func applySettings() {
+        let settings = Settings()
+        guard settings != appliedSettings else { return }
+        appliedSettings = settings
+        refresh()
     }
 
     // MARK: - Building
 
-    private func rebuildIfSettingsChanged() {
-        let wanted = MenuBarSettings.isEnabled ? MenuBarSettings.elements : []
-        // Набор тот же — могла поменяться только длина названия, хватит перерисовки.
-        guard wanted != entries.map(\.element) else { return refresh() }
-        rebuild()
-    }
-
-    private func rebuild() {
-        for entry in entries {
-            NSStatusBar.system.removeStatusItem(entry.item)
-        }
-        entries = []
-
-        guard MenuBarSettings.isEnabled else { return }
-
+    /// Все элементы создаются один раз и живут до конца сессии, вкл/выкл — через `isVisible`.
+    /// Пересоздание при каждом изменении настроек ломает сохранённые позиции: macOS хранит их
+    /// по порядковому номеру создания, нумерация съезжает, и элемент подхватывает чужую позицию
+    /// (в том числе с отключённого монитора) — уезжает за пределы строки меню и пропадает.
+    ///
+    /// Пока плеер в строке меню выключен, не создаём ничего: каждый `NSStatusItem` — это окно
+    /// в оконном сервере, держать восемь штук ради выключенной функции незачем.
+    private func build() {
+        guard items.isEmpty else { return }
         // NSStatusItem'ы выстраиваются справа налево, поэтому создаём в обратном порядке.
-        for element in MenuBarSettings.elements.reversed() {
+        for element in MenuBarElement.allCases.reversed() {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-            // Без autosaveName macOS не запоминает позицию элемента, и менеджеры строки меню
-            // (Ice, Bartender) при каждом запуске считают его новым и прячут обратно.
+            // Без autosaveName менеджеры строки меню (Ice, Bartender) при каждом запуске
+            // считают элемент новым и прячут обратно.
             item.autosaveName = "YAMP.\(element.rawValue)"
             item.button?.target = self
             item.button?.action = #selector(handleClick(_:))
             item.button?.tag = MenuBarElement.allCases.firstIndex(of: element) ?? 0
-            entries.insert((element, item), at: 0)
+            items[element] = item
         }
-
-        refresh()
     }
 
     // MARK: - Rendering
@@ -121,14 +135,22 @@ final class MenuBarController {
     private func refresh() {
         guard let player else { return }
 
-        for entry in entries {
-            guard let button = entry.item.button else { continue }
+        let visible = MenuBarSettings.isEnabled ? Set(MenuBarSettings.elements) : []
+        if !visible.isEmpty { build() }
+
+        // Порядок здесь не важен: позиции задаёт build(), а элементы независимы.
+        for (element, item) in items {
+            let isWanted = visible.contains(element)
+            // Присваивание пишет в UserDefaults, а лишняя запись дёргает диск и наблюдателей.
+            if item.isVisible != isWanted { item.isVisible = isWanted }
+
+            guard isWanted, let button = item.button else { continue }
             button.image = nil
             button.title = ""
             button.alphaValue = 1
             button.isEnabled = true
-            button.toolTip = entry.element.label
-            render(entry.element, into: button, player: player)
+            button.toolTip = element.label
+            render(element, into: button, player: player)
         }
     }
 
