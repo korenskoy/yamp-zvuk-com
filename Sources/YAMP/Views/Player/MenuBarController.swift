@@ -154,8 +154,12 @@ final class MenuBarController {
         }
     }
 
+    /// Набор элементов настраивается пользователем и стоит на фиксированных местах,
+    /// поэтому в эфире трековые кнопки не прячутся, а гаснут: иначе строка меню
+    /// перекладывалась бы при каждом включении радио.
     private func render(_ element: MenuBarElement, into button: NSStatusBarButton, player: PlayerService) {
         let track = player.currentTrack
+        let isRadio = player.currentStation != nil
 
         switch element {
         case .logo:
@@ -164,31 +168,37 @@ final class MenuBarController {
 
         case .shuffle:
             button.image = symbol("shuffle")
-            button.alphaValue = player.isShuffled ? 1 : 0.5
+            button.isEnabled = !isRadio
+            button.alphaValue = isRadio ? 0.3 : (player.isShuffled ? 1 : 0.5)
 
         case .previous:
             button.image = symbol("backward.fill")
-            button.isEnabled = player.hasPrevious
+            button.isEnabled = !isRadio && player.hasPrevious
 
         case .playPause:
             button.image = symbol(player.isPlaying ? "pause.fill" : "play.fill")
-            button.isEnabled = track != nil
+            button.isEnabled = track != nil || isRadio
 
         case .next:
             button.image = symbol("forward.fill")
-            button.isEnabled = player.hasNext
+            button.isEnabled = !isRadio && player.hasNext
 
         case .repeatMode:
             button.image = symbol(player.repeatMode == .one ? "repeat.1" : "repeat")
-            button.alphaValue = player.repeatMode == .off ? 0.5 : 1
+            button.isEnabled = !isRadio
+            button.alphaValue = isRadio ? 0.3 : (player.repeatMode == .off ? 0.5 : 1)
 
         case .love:
-            let isLiked = track.map { collection?.isTrackLiked($0.id) ?? false } ?? false
+            let isLiked = !isRadio && track.map { collection?.isTrackLiked($0.id) ?? false } ?? false
             button.image = symbol(isLiked ? "heart.fill" : "heart")
-            button.isEnabled = track != nil
+            button.isEnabled = !isRadio && track != nil
 
         case .title:
-            if let track {
+            if let station = player.currentStation {
+                let onAir = player.onAir?.displayLine
+                button.title = Self.titleText(onAir ?? station.name)
+                button.toolTip = onAir.map { "\($0) · \(station.name)" } ?? station.name
+            } else if let track {
                 button.title = Self.titleText(for: track)
                 button.toolTip = "\(track.artists.map(\.title).joined(separator: ", ")) — \(track.title)"
             } else {
@@ -213,7 +223,12 @@ final class MenuBarController {
 
     private static func titleText(for track: SimpleTrack) -> String {
         let artists = track.artists.map(\.title).joined(separator: ", ")
-        let full = artists.isEmpty ? track.title : "\(artists) — \(track.title)"
+        return titleText(artists.isEmpty ? track.title : "\(artists) — \(track.title)")
+    }
+
+    /// Строка меню делится с меню активного приложения, поэтому длинное
+    /// название подрезается по настроенному лимиту.
+    private static func titleText(_ full: String) -> String {
         let limit = MenuBarSettings.titleLimit
         guard full.count > limit else { return full }
         return full.prefix(limit - 1).trimmingCharacters(in: .whitespaces) + "…"
@@ -236,6 +251,8 @@ final class MenuBarController {
     }
 
     private func toggleLove() {
+        // В эфире лайкать нечего, а в очереди мог остаться трек с прошлого прослушивания.
+        guard player?.currentStation == nil else { return }
         guard let track = player?.currentTrack, let collection else { return }
         Task {
             await collection.toggleTrackLike(track, client: appState?.client)
@@ -267,6 +284,8 @@ final class MenuBarController {
     private func observePlayer() {
         withObservationTracking {
             _ = player?.currentTrack
+            _ = player?.currentStation
+            _ = player?.onAir
             _ = player?.isPlaying
             _ = player?.isShuffled
             _ = player?.repeatMode

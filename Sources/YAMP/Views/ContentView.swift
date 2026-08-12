@@ -85,6 +85,8 @@ struct ContentView: View {
             HistoryView()
         case .wave:
             WaveView()
+        case .radio:
+            RadioView()
         case .playlist(let id):
             PlaylistView(playlistId: id)
         case .artist(let id):

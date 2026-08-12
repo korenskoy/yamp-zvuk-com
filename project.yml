@@ -10,7 +10,7 @@ options:
 packages:
   ZvukMusic:
     url: https://github.com/korenskoy/zvuk-swift.git
-    from: "0.3.0"
+    from: "0.4.1"
   LastFM.swift:
     url: https://github.com/duhnnie/LastFM.swift
     from: "1.6.1"

@@ -20,7 +20,10 @@ final class LastFMService {
     enum ConnectionState { case disconnected, connecting, connected }
 
     private(set) var connectionState: ConnectionState = .disconnected
-    private(set) var scrobbleState: ScrobbleState = .idle
+    /// Не приватные: ими пользуется скробблинг эфира из `LastFMService+Radio.swift`.
+    var scrobbleState: ScrobbleState = .idle
+    @ObservationIgnored
+    var radioScrobbleTask: Task<Void, Never>?
     private(set) var connectedUsername: String?
     private(set) var sessionInvalidated = false
     /// Сколько прослушанных треков ждут отправки (накопились, пока сессия была недействительна).
@@ -148,23 +151,26 @@ final class LastFMService {
     // MARK: - Now Playing
 
     func updateNowPlaying(track: SimpleTrack) {
-        guard isConnected, let key = sessionKey else { return }
+        guard isConnected else { return }
         currentTrackId = track.id
         scrobbleState = .idle
         scrobbleThresholdReached = false
 
-        let artist = track.artistsString
-        let title = track.title
-        let album = track.release?.title
-        let dur = UInt(track.duration)
+        sendNowPlaying(artist: track.artistsString, title: track.title,
+                       album: track.release?.title, duration: UInt(track.duration))
+    }
 
-        let body = trackJSON(artist: artist, track: title, album: album, duration: dur)
+    /// Отправка «сейчас играет» по строкам: Last.fm не знает про наши ID, и
+    /// этим же путём уходит эфир радио, где трека с ID попросту нет.
+    func sendNowPlaying(artist: String, title: String, album: String?, duration: UInt) {
+        guard let key = sessionKey else { return }
+        let body = trackJSON(artist: artist, track: title, album: album, duration: duration)
 
         Task {
             let start = Date()
             do {
                 try await apiClient.updateNowPlaying(
-                    artist: artist, track: title, album: album, duration: dur, sessionKey: key
+                    artist: artist, track: title, album: album, duration: duration, sessionKey: key
                 )
                 logStore?.appendLastFM(
                     method: "POST", url: "last.fm/track.updateNowPlaying", statusCode: 200,
@@ -198,22 +204,23 @@ final class LastFMService {
     }
 
     private func scrobble(track: SimpleTrack) {
-        guard let key = sessionKey else { return }
+        sendScrobble(artist: track.artistsString, title: track.title,
+                     album: track.release?.title, duration: UInt(track.duration))
+    }
 
-        let artist = track.artistsString
-        let title = track.title
-        let album = track.release?.title
-        let dur = UInt(track.duration)
+    /// Отправка скроббла по строкам; этим же путём уходит эфир радио.
+    func sendScrobble(artist: String, title: String, album: String?, duration: UInt) {
+        guard let key = sessionKey else { return }
         let timestamp = Date()
 
-        let body = trackJSON(artist: artist, track: title, album: album, duration: dur)
+        let body = trackJSON(artist: artist, track: title, album: album, duration: duration)
 
         Task {
             let start = Date()
             do {
                 let accepted = try await apiClient.scrobble(
                     artist: artist, track: title, album: album,
-                    duration: dur, date: timestamp, sessionKey: key
+                    duration: duration, date: timestamp, sessionKey: key
                 )
                 logStore?.appendLastFM(
                     method: "POST", url: "last.fm/track.scrobble", statusCode: 200,
@@ -232,14 +239,14 @@ final class LastFMService {
                 )
                 flagIfInvalidSession(error)
                 // Не теряем прослушанное — откладываем до следующей успешной отправки.
-                enqueuePending(artist: artist, track: title, album: album, duration: dur, date: timestamp)
+                enqueuePending(artist: artist, track: title, album: album, duration: duration, date: timestamp)
             }
         }
     }
 
     // MARK: - Offline scrobble queue
 
-    private func enqueuePending(artist: String, track: String, album: String?, duration: UInt, date: Date) {
+    func enqueuePending(artist: String, track: String, album: String?, duration: UInt, date: Date) {
         pending.append(PendingScrobble(
             artist: artist, track: track, album: album,
             duration: duration, timestamp: UInt(date.timeIntervalSince1970)

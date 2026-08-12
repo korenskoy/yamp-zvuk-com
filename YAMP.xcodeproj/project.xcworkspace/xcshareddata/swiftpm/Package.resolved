@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/korenskoy/zvuk-swift.git",
       "state" : {
-        "revision" : "d592fffdc0c43fcefeecbef5d10e6d26fc47966a",
-        "version" : "0.3.0"
+        "revision" : "bb48857604ec90812cfaf4cd9a445f0211304bdb",
+        "version" : "0.4.1"
       }
     }
   ],

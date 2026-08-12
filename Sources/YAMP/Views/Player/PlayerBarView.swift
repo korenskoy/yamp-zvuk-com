@@ -26,7 +26,9 @@ struct PlayerBarView: View {
     @State private var appError: AppError?
 
     var body: some View {
-        if let track = playerService.currentTrack {
+        if let station = playerService.currentStation {
+            RadioBar(station: station)
+        } else if let track = playerService.currentTrack {
             VStack(spacing: 0) {
                 if #unavailable(macOS 26.0) {
                     Divider()
@@ -249,5 +251,55 @@ struct PlayerBarView: View {
                 Image(systemName: "music.note")
                     .foregroundStyle(.secondary)
             }
+    }
+}
+
+/// Панель плеера в режиме эфира.
+///
+/// От трековой отличается тем, чего в радио нет: прогресса и перемотки, переходов
+/// между треками, очереди, текста песни и лайка. Остаётся то, что осмысленно, —
+/// логотип станции, живая строка «исполнитель — трек», пауза и громкость.
+private struct RadioBar: View {
+    @Environment(AppSettings.self) private var appSettings
+    @Environment(PlayerService.self) private var playerService
+    @Environment(LastFMService.self) private var lastFMService
+
+    let station: RadioStation
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if #unavailable(macOS 26.0) {
+                Divider()
+            }
+
+            HStack(spacing: 16) {
+                RadioStationInfo(station: station, logoSize: 40)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Button(action: playerService.togglePlayPause) {
+                    Image(systemName: playerService.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.system(size: 32))
+                }
+                .buttonStyle(.plain)
+                .fixedSize()
+
+                HStack(spacing: 12) {
+                    Spacer()
+                    VolumeControlView()
+
+                    if lastFMService.isConnected && appSettings.isScrobblingEnabled {
+                        LastFMIcon()
+                            .fill(lastFMService.scrobbleState == .scrobbled ? Color.red : Color.primary)
+                            .frame(width: 12, height: 12)
+                            .opacity(lastFMService.scrobbleState == .scrobbled ? 1 : 0.2)
+                            .help(lastFMService.scrobbleState == .scrobbled ? "Заскробблено" : "Ожидание скробблинга")
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+        .modifier(LiquidGlassBarModifier())
     }
 }

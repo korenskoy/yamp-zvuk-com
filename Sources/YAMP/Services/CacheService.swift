@@ -29,6 +29,8 @@ private enum Limits {
     static let simplePlaylists = 200
     static let lyrics = 200
     static let streams = 500
+    /// Каталог радио запрашивается целиком; на момент написания в нём 161 станция.
+    static let radioCatalogue = 250
 }
 
 @MainActor
@@ -56,6 +58,7 @@ final class CacheService {
     private var recommendationsInflight: Task<DynamicBlock, Error>?
     private var recommendationsInflightGeneration = 0
     private var grids: [String: CacheEntry<GridPage>] = [:]
+    private var radioStations: CacheEntry<[RadioStation]>?
 
     func configure(appState: AppState) {
         self.appState = appState
@@ -302,6 +305,20 @@ final class CacheService {
         let grid = try await client.getGrid(name: name)
         grids[name] = CacheEntry(value: grid, insertedAt: Date(), ttl: TTL.stableEntity)
         return grid
+    }
+
+    // MARK: - Radio Stations
+
+    /// Каталог интернет-радио. Меняется редко, поэтому берётся целиком одним
+    /// запросом и живёт столько же, сколько прочие стабильные сущности.
+    func getRadioStations() async throws -> [RadioStation] {
+        if let entry = radioStations, !entry.isExpired {
+            return entry.value
+        }
+        guard let client else { return [] }
+        let stations = try await client.getRadioStations(limit: Limits.radioCatalogue)
+        radioStations = CacheEntry(value: stations, insertedAt: Date(), ttl: TTL.stableEntity)
+        return stations
     }
 
     // MARK: - Liked Tracks (query result)

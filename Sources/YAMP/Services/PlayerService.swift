@@ -10,6 +10,16 @@ final class PlayerService {
     enum RepeatMode: Int, Codable { case off, one, all }
 
     private(set) var currentTrack: SimpleTrack?
+    /// Играющая радиостанция. Непустое значение означает режим радио: очередь при
+    /// этом сохраняется, чтобы музыка продолжилась там же, где её прервали.
+    ///
+    /// Сеттер внутренний, а не приватный: режим радио реализован расширением в
+    /// `PlayerService+Radio.swift`, а оно лежит в другом файле.
+    var currentStation: RadioStation?
+    var onAir: RadioNowPlaying?
+
+    @ObservationIgnored
+    let metadataPoller = RadioMetadataPoller()
     private(set) var queue: [QueueItem] = []
     private(set) var queueIndex: Int = 0
     private(set) var isPlaying = false
@@ -32,6 +42,7 @@ final class PlayerService {
     private var itemObserver: NSKeyValueObservation?
     private var statusObserver: NSKeyValueObservation?
     private var endObserver: (any NSObjectProtocol)?
+    private var radioFailureObserver: (any NSObjectProtocol)?
 
     /// Поколение загрузки: каждый новый `loadAndPlay` инкрементирует счётчик,
     /// а результат применяется только если поколение не устарело (защита от гонки быстрых next/prev).
@@ -40,8 +51,9 @@ final class PlayerService {
     @ObservationIgnored
     private weak var appState: AppState?
 
+    /// Внутренние, а не приватные: ими пользуется режим радио из соседнего файла.
     @ObservationIgnored
-    private var appSettings: AppSettings?
+    var appSettings: AppSettings?
 
     @ObservationIgnored
     private weak var cacheService: CacheService?
@@ -50,10 +62,11 @@ final class PlayerService {
     private weak var historyStore: ListeningHistoryStore?
 
     @ObservationIgnored
-    private weak var lastFMService: LastFMService?
+    weak var lastFMService: LastFMService?
 
+    /// Внутренний, а не приватный: логирует и режим радио из соседнего файла.
     @ObservationIgnored
-    private weak var logStore: LogStore?
+    weak var logStore: LogStore?
 
     init() {
         player.volume = Float(volume)
@@ -199,6 +212,8 @@ final class PlayerService {
         loadGeneration += 1
         let generation = loadGeneration
 
+        // Любой запуск трека выводит плеер из режима радио.
+        stopRadio()
         currentTrack = track
         currentTime = 0
         duration = Double(track.duration)
@@ -236,6 +251,47 @@ final class PlayerService {
         }
     }
 
+    /// Ставит в плеер произвольный поток и запускает его.
+    ///
+    /// Нужен режиму радио, который живёт в отдельном файле и потому не видит
+    /// приватные `player`/`loadGeneration`. У эфира нет ни длительности, ни
+    /// позиции, поэтому обе обнуляются — иначе в UI останутся значения от
+    /// предыдущего трека.
+    func attachStream(_ url: URL, onFailure: @escaping @MainActor () -> Void) {
+        loadGeneration += 1
+        currentTime = 0
+        duration = 0
+
+        if let radioFailureObserver {
+            NotificationCenter.default.removeObserver(radioFailureObserver)
+        }
+        let item = AVPlayerItem(url: url)
+        radioFailureObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemFailedToPlayToEndTime,
+            object: item,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in onFailure() }
+        }
+
+        player.replaceCurrentItem(with: item)
+        player.play()
+        isPlaying = true
+    }
+
+    /// Отмечает, что воспроизведение прекратилось не по команде пользователя.
+    func markPlaybackStopped() {
+        isPlaying = false
+        updateNowPlayingPlaybackState()
+    }
+
+    /// Снимает наблюдение за оборвавшимся потоком радио.
+    func detachStreamObserver() {
+        guard let radioFailureObserver else { return }
+        NotificationCenter.default.removeObserver(radioFailureObserver)
+        self.radioFailureObserver = nil
+    }
+
     /// Останавливает воспроизведение и полностью очищает очередь/сохранённое состояние (при logout).
     func stopAndClear() {
         loadGeneration += 1
@@ -248,6 +304,7 @@ final class PlayerService {
         statusObserver?.invalidate()
         statusObserver = nil
         isPlaying = false
+        stopRadio()
         currentTrack = nil
         queue = []
         originalQueue = []
@@ -301,6 +358,9 @@ final class PlayerService {
             Task { @MainActor in
                 guard let self else { return }
                 self.currentTime = time.seconds.isFinite ? time.seconds : 0
+                // В эфире нет ни трека, ни длительности — скробблингом радио
+                // занимается поллер метаданных, а не позиция воспроизведения.
+                guard self.currentStation == nil else { return }
                 if self.appSettings?.isScrobblingEnabled ?? false,
                    let track = self.currentTrack {
                     self.lastFMService?.checkAndScrobble(
@@ -388,76 +448,6 @@ final class PlayerService {
             updateNowPlayingPlaybackState()
             logStore?.appendLocal(operation: "loadMoreWave", error: "\(error)")
         }
-    }
-
-    // MARK: - Now Playing
-
-    private func setupRemoteCommands() {
-        let center = MPRemoteCommandCenter.shared()
-
-        center.playCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.resume() }
-            return .success
-        }
-        center.pauseCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.pause() }
-            return .success
-        }
-        center.togglePlayPauseCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.togglePlayPause() }
-            return .success
-        }
-        center.nextTrackCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.next() }
-            return .success
-        }
-        center.previousTrackCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.previous() }
-            return .success
-        }
-        center.changePlaybackPositionCommand.addTarget { [weak self] event in
-            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
-            Task { @MainActor in self?.seek(to: event.positionTime) }
-            return .success
-        }
-    }
-
-    private func updateNowPlayingInfo() {
-        guard let track = currentTrack else { return }
-        var info: [String: Any] = [
-            MPMediaItemPropertyTitle: track.title,
-            MPMediaItemPropertyArtist: track.artistsString,
-            MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
-        ]
-        if let releaseName = track.release?.title {
-            info[MPMediaItemPropertyAlbumTitle] = releaseName
-        }
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
-
-        // Load artwork asynchronously via image cache
-        if let src = track.release?.image?.getURL(width: 600, height: 600),
-           let url = URL(string: src) {
-            let trackId = track.id
-            Task.detached {
-                guard let nsImage = await ImageCacheService.shared.image(for: url) else { return }
-                let artwork = MPMediaItemArtwork(boundsSize: nsImage.size) { _ in nsImage }
-                await MainActor.run {
-                    guard self.currentTrack?.id == trackId else { return }
-                    var current = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
-                    current[MPMediaItemPropertyArtwork] = artwork
-                    MPNowPlayingInfoCenter.default().nowPlayingInfo = current
-                }
-            }
-        }
-    }
-
-    private func updateNowPlayingPlaybackState() {
-        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
-        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentTime
-        info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 
     // MARK: - State Persistence

@@ -14,23 +14,39 @@ struct MenuBarPlayerView: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            if let track = playerService.currentTrack {
+            if let station = playerService.currentStation {
+                // У эфира одна-единственная кнопка, поэтому она стоит в строке со
+                // станцией: отдельный ряд под ней был бы пустой полосой.
+                stationInfo(station)
+            } else if let track = playerService.currentTrack {
                 trackInfo(track)
                 progress
+                controls
             } else {
                 Text("Ничего не играет")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-            }
 
-            controls
+                controls
+            }
         }
         .padding(16)
         .frame(width: 320)
         // В поповере кнопки ловят фокус и обводятся кольцом — в мини-плеере оно только мешает.
         .focusEffectDisabled()
         .errorAlert($appError)
+    }
+
+    // MARK: - Station info
+
+    /// У эфира нет позиции и длительности, поэтому вместо прогресса —
+    /// только логотип, что сейчас звучит, и название станции.
+    private func stationInfo(_ station: RadioStation) -> some View {
+        HStack(spacing: 12) {
+            RadioStationInfo(station: station, logoSize: 48, titleLineLimit: 2)
+            playPauseButton
+        }
     }
 
     // MARK: - Track info
@@ -133,33 +149,52 @@ struct MenuBarPlayerView: View {
 
     // MARK: - Controls
 
+    /// В эфире остаётся только пауза: переходов между треками у радио нет, а лайк
+    /// и «не нравится» подействовали бы на трек из сохранённой очереди — тот, что
+    /// сейчас не играет.
     private var controls: some View {
         HStack(spacing: 20) {
-            dislikeButton
-
-            Button { playerService.previous() } label: {
-                Image(systemName: "backward.fill")
-                    .font(.title3)
+            if !isRadio {
+                dislikeButton
+                previousButton
             }
-            .buttonStyle(.plain)
-            .disabled(!playerService.hasPrevious)
 
-            Button { playerService.togglePlayPause() } label: {
-                Image(systemName: playerService.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 34))
+            playPauseButton
+
+            if !isRadio {
+                nextButton
+                likeButton
             }
-            .buttonStyle(.plain)
-            .disabled(playerService.currentTrack == nil)
-
-            Button { playerService.next() } label: {
-                Image(systemName: "forward.fill")
-                    .font(.title3)
-            }
-            .buttonStyle(.plain)
-            .disabled(!playerService.hasNext)
-
-            likeButton
         }
+    }
+
+    private var isRadio: Bool { playerService.currentStation != nil }
+
+    private var previousButton: some View {
+        Button { playerService.previous() } label: {
+            Image(systemName: "backward.fill")
+                .font(.title3)
+        }
+        .buttonStyle(.plain)
+        .disabled(!playerService.hasPrevious)
+    }
+
+    private var playPauseButton: some View {
+        Button { playerService.togglePlayPause() } label: {
+            Image(systemName: playerService.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                .font(.system(size: 34))
+        }
+        .buttonStyle(.plain)
+        .disabled(playerService.currentTrack == nil && playerService.currentStation == nil)
+    }
+
+    private var nextButton: some View {
+        Button { playerService.next() } label: {
+            Image(systemName: "forward.fill")
+                .font(.title3)
+        }
+        .buttonStyle(.plain)
+        .disabled(!playerService.hasNext)
     }
 
     private var dislikeButton: some View {

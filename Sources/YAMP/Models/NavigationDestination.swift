@@ -8,6 +8,7 @@ enum NavigationDestination: Hashable, Codable {
     case collection
     case history
     case wave
+    case radio
     case playlists
     case artist(id: String)
     case release(id: String)

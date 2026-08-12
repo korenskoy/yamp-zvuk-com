@@ -56,6 +56,9 @@ struct SidebarView: View {
 
                 Label("Волна", systemImage: "waveform")
                     .tag(NavigationDestination.wave)
+
+                Label("Радио", systemImage: "radio")
+                    .tag(NavigationDestination.radio)
             }
 
             Section("Плейлисты") {

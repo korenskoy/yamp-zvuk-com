@@ -77,12 +77,12 @@ final class AppState {
 
         do {
             let profile = try await authService.validateToken(token)
-            self.client = ZvukClient(token: token, rateLimit: 5)
+            self.client = ZvukClient(token: token, userAgent: UserAgent.browser, rateLimit: 5)
             self.currentUser = profile
             self.isAuthenticated = true
         } catch is URLError {
             // Network unreachable — keep token, authenticate optimistically
-            self.client = ZvukClient(token: token, rateLimit: 5)
+            self.client = ZvukClient(token: token, userAgent: UserAgent.browser, rateLimit: 5)
             self.isAuthenticated = true
         } catch let error as ZvukError {
             switch error {
@@ -90,7 +90,7 @@ final class AppState {
                 authService.clearToken()
             case .network, .timedOut:
                 // Transient network error — keep token, authenticate optimistically
-                self.client = ZvukClient(token: token, rateLimit: 5)
+                self.client = ZvukClient(token: token, userAgent: UserAgent.browser, rateLimit: 5)
                 self.isAuthenticated = true
             default:
                 // Other API errors — keep token but don't authenticate
@@ -105,7 +105,7 @@ final class AppState {
     func login(token: String) async throws {
         let profile = try await authService.validateToken(token)
         authService.saveToken(token)
-        self.client = ZvukClient(token: token, rateLimit: 5)
+        self.client = ZvukClient(token: token, userAgent: UserAgent.browser, rateLimit: 5)
         self.currentUser = profile
         self.isAuthenticated = true
         await collectionService?.loadCollection(client: client)

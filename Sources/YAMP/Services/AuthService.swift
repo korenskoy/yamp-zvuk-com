@@ -12,7 +12,7 @@ final class AuthService {
         isValidating = true
         defer { isValidating = false }
 
-        let client = ZvukClient(token: token)
+        let client = ZvukClient(token: token, userAgent: UserAgent.browser)
         let profile = try await client.getProfile()
 
         guard let result = profile.result else {
