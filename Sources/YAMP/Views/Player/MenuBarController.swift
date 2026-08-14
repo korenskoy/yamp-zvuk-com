@@ -60,6 +60,12 @@ enum MenuBarSettings {
 
 @MainActor
 final class MenuBarController {
+    /// Идентификатор главного окна: по нему `openWindow` пересоздаёт закрытую сцену.
+    static let mainWindowID = "main"
+
+    /// Пробрасывается из SwiftUI: `openWindow` живёт только в окружении `View`.
+    var openMainWindow: (() -> Void)?
+
     private var items: [MenuBarElement: NSStatusItem] = [:]
     private var popover: NSPopover?
     /// Настройки, уже применённые к строке меню.
@@ -81,7 +87,12 @@ final class MenuBarController {
         let titleLimit = MenuBarSettings.titleLimit
     }
 
+    /// Вызывается из `.task` главного окна, а окно пересоздаётся пунктом «Показать» —
+    /// без этой защиты каждое новое окно вешало бы ещё один наблюдатель настроек
+    /// и ещё одну цепочку слежения за плеером.
     func configure(player: PlayerService, collection: CollectionService, appState: AppState) {
+        guard self.player == nil else { return }
+
         self.player = player
         self.collection = collection
         self.appState = appState
@@ -125,6 +136,9 @@ final class MenuBarController {
             item.autosaveName = "YAMP.\(element.rawValue)"
             item.button?.target = self
             item.button?.action = #selector(handleClick(_:))
+            // Правая кнопка приходит тем же действием: назначить `item.menu` нельзя,
+            // иначе меню перехватит и обычный клик, и кнопки перестанут работать.
+            item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
             item.button?.tag = MenuBarElement.allCases.firstIndex(of: element) ?? 0
             items[element] = item
         }
@@ -237,6 +251,12 @@ final class MenuBarController {
     // MARK: - Actions
 
     @objc private func handleClick(_ sender: NSStatusBarButton) {
+        // Меню общее для всех кнопок и плеера не касается, поэтому проверяем до guard.
+        if isContextClick {
+            showContextMenu(from: sender)
+            return
+        }
+
         guard let element = MenuBarElement.allCases[safe: sender.tag], let player else { return }
 
         switch element {
@@ -257,6 +277,54 @@ final class MenuBarController {
         Task {
             await collection.toggleTrackLike(track, client: appState?.client)
         }
+    }
+
+    // MARK: - Context menu
+
+    /// Правый клик или Ctrl+клик — на macOS это одно и то же приглашение к меню.
+    /// Кнопка подписана только на `leftMouseUp`/`rightMouseUp`, других типов не придёт.
+    private var isContextClick: Bool {
+        guard let event = NSApp.currentEvent else { return false }
+        return event.type == .rightMouseUp || event.modifierFlags.contains(.control)
+    }
+
+    private func showContextMenu(from button: NSStatusBarButton) {
+        let menu = NSMenu()
+
+        let show = NSMenuItem(title: "Показать", action: #selector(showMainWindow), keyEquivalent: "")
+        show.target = self
+        menu.addItem(show)
+
+        menu.addItem(.separator())
+
+        // Выход — стандартное действие приложения, отдельная обёртка ему не нужна.
+        let quit = NSMenuItem(
+            title: "Выйти", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        quit.target = NSApp
+        menu.addItem(quit)
+
+        // Поповер перекрыл бы меню — он `.transient` и сам не закроется.
+        popover?.performClose(nil)
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 4), in: button)
+    }
+
+    @objc private func showMainWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+
+        // Поповер плеера — тоже окно, но главным стать не может, поэтому не спутаем.
+        if let window = NSApp.windows.first(where: { $0.canBecomeMain }) {
+            if window.isMiniaturized { window.deminiaturize(nil) }
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        // Закрытое окно `WindowGroup` уничтожается вместе со сценой, и вернуть его
+        // может только сам SwiftUI. `applicationShouldHandleReopen` для этого не
+        // годится: делегат отвечает `true`, но окно не создаётся — проверено.
+        //
+        // Сцена именно `WindowGroup`, хотя окно одно: у `Window` система включает
+        // `applicationShouldTerminateAfterLastWindowClosed`, и закрытие окна убивало бы
+        // приложение вместе со строкой меню.
+        openMainWindow?()
     }
 
     private func togglePopover(from button: NSStatusBarButton) {
@@ -303,5 +371,20 @@ final class MenuBarController {
 private extension Array {
     subscript(safe index: Int) -> Element? {
         indices.contains(index) ? self[index] : nil
+    }
+}
+
+/// Отдаёт контроллеру строки меню действие открытия главного окна.
+///
+/// `openWindow` доступен только через окружение `View`, а контроллер — обычный
+/// класс, поэтому действие приходится передавать ему отсюда.
+struct MainWindowOpener: ViewModifier {
+    @Environment(\.openWindow) private var openWindow
+    let controller: MenuBarController
+
+    func body(content: Content) -> some View {
+        content.onAppear {
+            controller.openMainWindow = { openWindow(id: MenuBarController.mainWindowID) }
+        }
     }
 }

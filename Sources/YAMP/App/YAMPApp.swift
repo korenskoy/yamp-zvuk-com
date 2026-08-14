@@ -18,7 +18,7 @@ struct YAMPApp: App {
     @State private var menuBarController = MenuBarController()
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: MenuBarController.mainWindowID) {
             Group {
                 if appState.isRestoringSession {
                     SplashView()
@@ -37,6 +37,7 @@ struct YAMPApp: App {
             .environment(historyStore)
             .environment(lastFMService)
             .environment(updateService)
+            .modifier(MainWindowOpener(controller: menuBarController))
             .task {
                 // Activate as regular app (show in Dock with icon and menu)
                 NSApplication.shared.setActivationPolicy(.regular)
