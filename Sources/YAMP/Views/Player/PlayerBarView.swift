@@ -4,10 +4,10 @@ import ZvukMusic
 private struct LiquidGlassBarModifier: ViewModifier {
     func body(content: Content) -> some View {
         if #available(macOS 26.0, *) {
-            content
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
-                .padding(.horizontal, 8)
-                .padding(.bottom, 4)
+            // ponytail: full-bleed glass. A floating rounded card only reads right when
+            // content scrolls under it; the bar sits below the content, so the inset gap
+            // exposed bare window background on macOS 26+.
+            content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
         } else {
             content
                 .background(.bar)

@@ -4,7 +4,7 @@ import ZvukMusic
 private struct GlassBottomPanelModifier: ViewModifier {
     func body(content: Content) -> some View {
         if #available(macOS 26.0, *) {
-            content.glassEffect(.regular, in: .rect(cornerRadius: 12))
+            content.glassEffect(.regular, in: .rect(cornerRadius: 0))
         } else {
             content.background(.bar)
         }
