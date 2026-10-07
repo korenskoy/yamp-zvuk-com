@@ -924,7 +924,7 @@
 			repositoryURL = "https://github.com/korenskoy/zvuk-swift.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.4.1;
+				minimumVersion = 0.4.2;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

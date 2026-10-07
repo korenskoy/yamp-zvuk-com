@@ -8,18 +8,27 @@ final class AuthService {
 
     private static let tokenKey = "zvuk_token"
 
-    func validateToken(_ token: String) async throws -> ProfileResult {
+    /// Returns `nil` when the token is valid but the profile is unavailable —
+    /// Zvuk's anti-bot protection sits in front of the REST profile endpoint.
+    func validateToken(_ token: String) async throws -> ProfileResult? {
         isValidating = true
         defer { isValidating = false }
 
         let client = ZvukClient(token: token, userAgent: UserAgent.browser)
-        let profile = try await client.getProfile()
+        do {
+            let profile = try await client.getProfile()
 
-        guard let result = profile.result else {
-            throw ZvukError.unauthorized(message: "Invalid token")
+            guard let result = profile.result else {
+                throw ZvukError.unauthorized(message: "Invalid token")
+            }
+
+            return result
+        } catch ZvukError.botDetected {
+            // ponytail: same fallback as ZvukClient.isAuthorized() in 0.4.2 — verify the
+            // token through GraphQL. A rejected token still throws .unauthorized.
+            _ = try await client.getCollection()
+            return nil
         }
-
-        return result
     }
 
     func saveToken(_ token: String) {
