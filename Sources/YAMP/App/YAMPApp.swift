@@ -16,6 +16,7 @@ struct YAMPApp: App {
     @State private var lastFMService = LastFMService()
     @State private var updateService = UpdateService()
     @State private var menuBarController = MenuBarController()
+    @State private var controlServer = ControlServer()
 
     var body: some Scene {
         WindowGroup(id: MenuBarController.mainWindowID) {
@@ -37,6 +38,7 @@ struct YAMPApp: App {
             .environment(historyStore)
             .environment(lastFMService)
             .environment(updateService)
+            .environment(controlServer)
             .modifier(MainWindowOpener(controller: menuBarController))
             .task {
                 // Activate as regular app (show in Dock with icon and menu)
@@ -48,6 +50,10 @@ struct YAMPApp: App {
 
                 updateService.start()
                 menuBarController.configure(player: playerService, collection: collectionService, appState: appState)
+                controlServer.configure(
+                    player: playerService, collection: collectionService,
+                    cache: cacheService, appState: appState, logStore: logStore
+                )
 
                 guard !appState.isAuthenticated else { return }
 

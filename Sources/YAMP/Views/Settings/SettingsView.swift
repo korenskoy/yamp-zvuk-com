@@ -16,6 +16,7 @@ struct SettingsView: View {
             AudioQualitySection()
             MenuBarSection()
             LastFMSection()
+            RemoteControlSection()
             UpdatesSection()
             AboutSection(featuredInfo: featuredInfo, showFeatureFlags: $showFeatureFlags)
         }
@@ -162,6 +163,33 @@ private struct MenuBarSection: View {
                     .joined(separator: ",")
             }
         )
+    }
+}
+
+// MARK: - Пульт
+
+private struct RemoteControlSection: View {
+    @Environment(ControlServer.self) private var controlServer
+    @AppStorage(ControlServer.enabledKey) private var isEnabled = false
+
+    var body: some View {
+        Section("Пульт (localhost)") {
+            Toggle("Разрешить управление с этого компьютера", isOn: $isEnabled)
+                .onChange(of: isEnabled) { _, enabled in
+                    if enabled { controlServer.start() } else { controlServer.stop() }
+                }
+
+            if controlServer.isRunning, let tokenPath = ControlServer.tokenURL {
+                LabeledContent("Адрес", value: "127.0.0.1:\(ControlServer.port)")
+                Button("Скопировать путь к токену") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(tokenPath.path, forType: .string)
+                }
+                Text("Плеером можно управлять и читать логи запросов локально — например из терминала. Запросы без токена отклоняются.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 }
 

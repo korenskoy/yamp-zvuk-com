@@ -85,6 +85,7 @@
 		CD45F7C2E7CD3A69786FDEE3 /* RadioNowPlaying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C64CC3FE75FA4994EFE62D6 /* RadioNowPlaying.swift */; };
 		CFF8453B99037AFA90B1A053 /* ListeningHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27C18C89D9209B13696A0287 /* ListeningHistoryStore.swift */; };
 		D0AC2B897A801EAAC093C0B4 /* ZvukMusic in Frameworks */ = {isa = PBXBuildFile; productRef = B1AD32F23821523FD9604D32 /* ZvukMusic */; };
+		D11F93B36E96E8D3463849C1 /* ControlServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B669967BEF72E3AC32B33C /* ControlServer.swift */; };
 		D65E2FA442386ADE8E53F516 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 882CC147A4A1534622402AAD /* NowPlayingView.swift */; };
 		D6AD32ED70DFE71FABD85695 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA72B33F418F6D475979EA8 /* SplashView.swift */; };
 		D72DADDEC21CDB0AD5814117 /* Track+Simplified.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5EC079ACC5A321A41A8C59 /* Track+Simplified.swift */; };
@@ -158,6 +159,7 @@
 		7733D6F463E54AF171397A7C /* RadioStationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioStationCard.swift; sourceTree = "<group>"; };
 		784A935ACF8A7A80FA42F007 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		78790803623E8810A88D9E4C /* PlaylistViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistViewModel.swift; sourceTree = "<group>"; };
+		79B669967BEF72E3AC32B33C /* ControlServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlServer.swift; sourceTree = "<group>"; };
 		79D07CFBC9AAEF030B8364EC /* EditorialPlaylistCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorialPlaylistCardView.swift; sourceTree = "<group>"; };
 		7B29E70C9FB41BF4DF39164B /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		7CB48EBAF66B75A2562044E3 /* PlayerService+NowPlaying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PlayerService+NowPlaying.swift"; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 				841FBDF67265E80438F3A915 /* AuthService.swift */,
 				A07A84F1FE19270FF253A92D /* CacheService.swift */,
 				C812FBCA52C160393A061AC7 /* CollectionService.swift */,
+				79B669967BEF72E3AC32B33C /* ControlServer.swift */,
 				ED74DB6FAC4C1E6BA873C19D /* ImageCacheService.swift */,
 				17B3368D367E2D7AF9CE5E19 /* KeychainHelper.swift */,
 				A19AD2285E4BE1AE5EF958EF /* LastFMService.swift */,
@@ -648,6 +651,7 @@
 				C53B54C32C30D21E13AE620B /* CollectionView.swift in Sources */,
 				48ED751EAA14B503B1551BB3 /* CollectionViewModel.swift in Sources */,
 				2D5F7807430826E9041608E1 /* ContentView.swift in Sources */,
+				D11F93B36E96E8D3463849C1 /* ControlServer.swift in Sources */,
 				40E7DD077ACC2A6168BBCE5A /* CoverSheetView.swift in Sources */,
 				9537B17BEBAC62E554F86B3C /* EditorialPlaylistCardView.swift in Sources */,
 				8269B42898834E6404EFAC71 /* ErrorAlertModifier.swift in Sources */,
