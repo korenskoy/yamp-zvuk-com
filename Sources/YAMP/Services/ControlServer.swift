@@ -212,6 +212,25 @@ final class ControlServer {
                 ["title": $0.header?.title ?? "", "type": $0.type, "view": $0.view, "items": $0.data.count]
             }]
 
+        case "/playlist/create":
+            guard let client = appState.client else { return ["error": "not authenticated"] }
+            guard let name = query["name"], !name.isEmpty else { return ["error": "name required"] }
+            let ids = Self.trackIds(query["tracks"], player: player)
+            let id = try await client.createPlaylist(name, trackIds: ids.isEmpty ? nil : ids)
+            cache.invalidateUserPlaylists()
+            collection.bumpPlaylistsVersion()
+            return ["created": id, "tracks": ids.count]
+
+        case "/playlist/add":
+            guard let client = appState.client else { return ["error": "not authenticated"] }
+            guard let id = query["id"] else { return ["error": "id required"] }
+            let ids = Self.trackIds(query["tracks"], player: player)
+            guard !ids.isEmpty else { return ["error": "tracks=<id,id> required, or play a track"] }
+            let added = try await client.addTracksToPlaylist(id, trackIds: ids)
+            cache.invalidatePlaylist(id)
+            collection.bumpPlaylistsVersion()
+            return ["added": added, "playlist": id, "tracks": ids]
+
         case "/play/track":
             guard let client = appState.client, let id = query["id"] else { return ["error": "id required"] }
             guard let track = try await client.getTrack(id)?.simplified else { return ["error": "track not found"] }
@@ -237,6 +256,7 @@ final class ControlServer {
                 "/state", "/logs?limit=50&errors=1&full=1", "/play", "/pause", "/toggle", "/next", "/prev",
                 "/shuffle", "/repeat", "/volume?v=0.5", "/seek?t=30", "/like", "/search?q=&limit=10",
                 "/playlists", "/liked", "/radio", "/grid?name=main",
+                "/playlist/create?name=&tracks=", "/playlist/add?id=&tracks=",
                 "/play/track?id=", "/play/playlist?id=", "/play/radio?id=",
             ]]
         }
@@ -263,6 +283,14 @@ final class ControlServer {
             result["onAir"] = [player.onAir?.artist, player.onAir?.title].compactMap { $0 }.joined(separator: " — ")
         }
         return result
+    }
+
+    /// `tracks=1,2,3`; пустой параметр означает «текущий трек».
+    private static func trackIds(_ raw: String?, player: PlayerService) -> [String] {
+        guard let raw, !raw.isEmpty else {
+            return [player.currentTrack?.id].compactMap { $0 }
+        }
+        return raw.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
     }
 
     private static func json(for track: SimpleTrack) -> [String: Any] {

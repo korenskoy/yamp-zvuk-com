@@ -38,6 +38,8 @@ final class CollectionService {
         likedReleaseIDs = []
         likedPlaylistIDs = []
         playlistsVersion = 0
+        userPlaylists = []
+        playlistsLoadedVersion = nil
         isLoaded = false
         appError = nil
     }
@@ -110,6 +112,38 @@ final class CollectionService {
     }
 
     // MARK: - Playlist
+
+    /// Свои плейлисты для меню «Добавить в плейлист».
+    private(set) var userPlaylists: [SimplePlaylist] = []
+
+    @ObservationIgnored
+    private var playlistsLoadedVersion: Int?
+
+    /// Грузит список один раз и перезагружает только после изменения плейлистов.
+    /// ponytail: данные берутся из CacheService, поэтому повторный вызов дешёвый.
+    func loadUserPlaylistsIfNeeded() async {
+        guard let cache, playlistsLoadedVersion != playlistsVersion else { return }
+        playlistsLoadedVersion = playlistsVersion
+        do {
+            let ids = try await cache.getUserPlaylistIDs()
+            userPlaylists = ids.isEmpty ? [] : try await cache.getSimplePlaylists(ids)
+        } catch {
+            playlistsLoadedVersion = nil
+            logStore?.appendLocal(operation: "loadUserPlaylists", error: "\(error)")
+        }
+    }
+
+    func addTrack(_ trackId: String, toPlaylist playlistId: String, client: ZvukClient?) async {
+        guard let client else { return }
+        do {
+            _ = try await client.addTracksToPlaylist(playlistId, trackIds: [trackId])
+            cache?.invalidatePlaylist(playlistId)
+            bumpPlaylistsVersion()
+        } catch {
+            appError = AppError.from(error)
+            logStore?.appendLocal(operation: "addTracksToPlaylist \(playlistId)", error: "\(error)")
+        }
+    }
 
     func togglePlaylistLike(_ id: String, client: ZvukClient?) async {
         guard let client else { return }

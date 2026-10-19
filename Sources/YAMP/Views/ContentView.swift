@@ -4,10 +4,13 @@ import AppKit
 struct ContentView: View {
     @Environment(AppState.self) private var appState
     @Environment(LogStore.self) private var logStore
+    @Environment(CollectionService.self) private var collectionService
     @State private var searchViewModel = SearchViewModel()
 
     var body: some View {
-        VStack(spacing: 0) {
+        @Bindable var collectionService = collectionService
+
+        return VStack(spacing: 0) {
             NavigationSplitView {
                 SidebarView()
             } detail: {
@@ -66,6 +69,7 @@ struct ContentView: View {
         .task {
             logStore.attach(to: appState.client)
         }
+        .errorAlert($collectionService.appError)
     }
 
     @ViewBuilder

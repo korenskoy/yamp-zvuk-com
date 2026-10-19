@@ -5,9 +5,9 @@ struct TrackRowView<Trailing: View>: View {
     let track: SimpleTrack
     let trailing: Trailing
     let onPlay: () -> Void
-    var onArtistTap: ((String) -> Void)? = nil
-    var onReleaseTap: ((String) -> Void)? = nil
     @Environment(PlayerService.self) private var playerService
+    @Environment(CollectionService.self) private var collectionService
+    @Environment(AppState.self) private var appState
 
     init(
         track: SimpleTrack,
@@ -17,6 +17,10 @@ struct TrackRowView<Trailing: View>: View {
         self.track = track
         self.trailing = trailing()
         self.onPlay = onPlay
+    }
+
+    private var isLiked: Bool {
+        collectionService.isTrackLiked(track.id)
     }
 
     private var isPlaying: Bool {
@@ -75,6 +79,59 @@ struct TrackRowView<Trailing: View>: View {
         .contentShape(Rectangle())
         .onTapGesture {
             onPlay()
+        }
+        .contextMenu {
+            Button(isLiked ? "Убрать лайк" : "Нравится") {
+                Task { await collectionService.toggleTrackLike(track, client: appState.client) }
+            }
+
+            addToPlaylistMenu
+
+            Button("В конец очереди") {
+                playerService.appendToQueue([track], context: .search)
+            }
+
+            Divider()
+
+            if let artist = track.artists.first {
+                Button("Перейти к артисту") {
+                    appState.selectedDestination = .artist(id: artist.id)
+                }
+            }
+
+            if let releaseId = track.release?.id {
+                Button("Перейти к альбому") {
+                    appState.selectedDestination = .release(id: releaseId)
+                }
+            }
+
+            Button("Скопировать ссылку") {
+                if let url = ShareService.url(for: .track(id: track.id)) {
+                    ShareService.copyToPasteboard(url)
+                }
+            }
+        }
+        .task {
+            await collectionService.loadUserPlaylistsIfNeeded()
+        }
+    }
+
+    @ViewBuilder
+    private var addToPlaylistMenu: some View {
+        Menu("Добавить в плейлист") {
+            if collectionService.userPlaylists.isEmpty {
+                Text("Нет плейлистов")
+            } else {
+                ForEach(collectionService.userPlaylists, id: \.id) { playlist in
+                    Button(playlist.title) {
+                        Task {
+                            await collectionService.addTrack(
+                                track.id, toPlaylist: playlist.id, client: appState.client
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
