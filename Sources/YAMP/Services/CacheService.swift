@@ -262,14 +262,8 @@ final class CacheService {
         }
         guard let client else { throw ZvukError.unauthorized(message: "No client") }
 
-        // Try direct stream first
-        if let direct = try? await client.getDirectStreamURL(trackId, quality: quality) {
-            streams[key] = CacheEntry(value: direct.stream, insertedAt: Date(), ttl: TTL.stream)
-            evictIfNeeded(&streams, max: Limits.streams)
-            return direct.stream
-        }
-
-        // Map to GraphQL quality
+        // ponytail: только GraphQL. Прямая tiny-ручка стоит за анти-бот защитой и отдаёт 418,
+        // а GraphQL выдаёт ссылку на всех качествах, поэтому первая попытка была чистой задержкой.
         let gqlQuality: Quality = switch quality {
         case .mid: .mid
         case .high: .high
@@ -285,7 +279,7 @@ final class CacheService {
             if case .subscriptionRequired = error {
                 let url = try await client.getStreamURL(trackId, quality: .mid)
                 // Кэшируем и под запрошенным ключом, и под mid — иначе каждый плей трека без подписки
-                // повторяет полный цикл (direct → запрошенное качество → mid).
+                // повторяет полный цикл (запрошенное качество → mid).
                 streams[key] = CacheEntry(value: url, insertedAt: Date(), ttl: TTL.stream)
                 streams["\(trackId)_mid"] = CacheEntry(value: url, insertedAt: Date(), ttl: TTL.stream)
                 evictIfNeeded(&streams, max: Limits.streams)

@@ -78,12 +78,27 @@ struct SidebarView: View {
                         Label(playlist.title, systemImage: "music.note.list")
                             .tag(NavigationDestination.playlist(id: playlist.id))
                             .contextMenu {
-                                Button(role: .destructive) {
-                                    Task {
-                                        await playlistsVM.deletePlaylist(playlist.id, client: appState.client, cache: cacheService)
+                                if appState.isOwnedByCurrentUser(userId: playlist.userId) {
+                                    Button(role: .destructive) {
+                                        Task {
+                                            await playlistsVM.deletePlaylist(
+                                                playlist.id, client: appState.client, cache: cacheService
+                                            )
+                                        }
+                                    } label: {
+                                        Label("Удалить", systemImage: "trash")
                                     }
-                                } label: {
-                                    Label("Удалить", systemImage: "trash")
+                                } else {
+                                    Button {
+                                        Task {
+                                            await collectionService.togglePlaylistLike(
+                                                playlist.id, client: appState.client
+                                            )
+                                            await playlistsVM.load(cache: cacheService)
+                                        }
+                                    } label: {
+                                        Label("Убрать из коллекции", systemImage: "heart.slash")
+                                    }
                                 }
                             }
                     }

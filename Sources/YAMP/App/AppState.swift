@@ -7,6 +7,14 @@ final class AppState {
     var isAuthenticated = false
     var isRestoringSession = true
     var currentUser: ProfileResult?
+    /// Ошибки действий, у которых нет своей view model, — например пунктов меню трека.
+    var appError: AppError?
+
+    /// Коллекция хранит свои и лайкнутые плейлисты вместе; удалять сервис разрешает только владельцу.
+    func isOwnedByCurrentUser(userId: String?) -> Bool {
+        guard let userId, let currentId = currentUser?.id else { return false }
+        return userId == String(currentId)
+    }
     var selectedDestination: NavigationDestination? = .search {
         didSet {
             if !isNavigatingHistory {
@@ -77,12 +85,18 @@ final class AppState {
 
         do {
             let profile = try await authService.validateToken(token)
-            self.client = ZvukClient(token: token, userAgent: UserAgent.browser, rateLimit: 5)
+            self.client = ZvukClient(
+                token: token, userAgent: UserAgent.browser,
+                mobileProfile: SessionProfile.current, rateLimit: 5
+            )
             self.currentUser = profile
             self.isAuthenticated = true
         } catch is URLError {
             // Network unreachable — keep token, authenticate optimistically
-            self.client = ZvukClient(token: token, userAgent: UserAgent.browser, rateLimit: 5)
+            self.client = ZvukClient(
+                token: token, userAgent: UserAgent.browser,
+                mobileProfile: SessionProfile.current, rateLimit: 5
+            )
             self.isAuthenticated = true
         } catch let error as ZvukError {
             switch error {
@@ -90,7 +104,10 @@ final class AppState {
                 authService.clearToken()
             case .network, .timedOut:
                 // Transient network error — keep token, authenticate optimistically
-                self.client = ZvukClient(token: token, userAgent: UserAgent.browser, rateLimit: 5)
+                self.client = ZvukClient(
+                token: token, userAgent: UserAgent.browser,
+                mobileProfile: SessionProfile.current, rateLimit: 5
+            )
                 self.isAuthenticated = true
             default:
                 // Other API errors — keep token but don't authenticate
@@ -105,7 +122,10 @@ final class AppState {
     func login(token: String) async throws {
         let profile = try await authService.validateToken(token)
         authService.saveToken(token)
-        self.client = ZvukClient(token: token, userAgent: UserAgent.browser, rateLimit: 5)
+        self.client = ZvukClient(
+                token: token, userAgent: UserAgent.browser,
+                mobileProfile: SessionProfile.current, rateLimit: 5
+            )
         self.currentUser = profile
         self.isAuthenticated = true
         await collectionService?.loadCollection(client: client)

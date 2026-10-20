@@ -41,6 +41,27 @@ final class PlaylistViewModel {
         }
     }
 
+    func removeTrack(
+        _ trackId: String, client: ZvukClient?, cache: CacheService, logStore: LogStore
+    ) async {
+        guard let client else { return }
+        do {
+            guard try await client.removeTracksFromPlaylist(playlistId, trackIds: [trackId]) else {
+                // Запрос прошёл, но сервис не подтвердил удаление — молча терять это нельзя.
+                logStore.appendLocal(
+                    operation: "removeTracksFromPlaylist \(playlistId)",
+                    error: "сервис не подтвердил удаление трека \(trackId)"
+                )
+                self.appError = .unknown
+                return
+            }
+            cache.invalidatePlaylist(playlistId)
+            await load(cache: cache)
+        } catch {
+            self.appError = AppError.from(error)
+        }
+    }
+
     func renamePlaylist(_ newName: String, client: ZvukClient?, cache: CacheService, collection: CollectionService) async -> Bool {
         guard let client else { return false }
         do {

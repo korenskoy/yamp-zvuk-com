@@ -4,7 +4,7 @@ import ZvukMusic
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
 
-    @State private var subscription: Subscription?
+    @State private var subscription: UserSubscription?
     @State private var featuredInfo: FeaturedInfo?
     @State private var subscriptionLoading = false
     @State private var showFeatureFlags = false
@@ -16,6 +16,7 @@ struct SettingsView: View {
             AudioQualitySection()
             MenuBarSection()
             LastFMSection()
+            SessionProfileSection()
             RemoteControlSection()
             UpdatesSection()
             AboutSection(featuredInfo: featuredInfo, showFeatureFlags: $showFeatureFlags)
@@ -36,7 +37,9 @@ struct SettingsView: View {
         subscriptionLoading = true
         defer { subscriptionLoading = false }
 
-        subscription = (try? await client.getSubscription())?.subscription
+        // ponytail: GraphQL вместо REST api/tiny/subscription — ту ручку глушит анти-бот защита.
+        // Цена: нет человекочитаемого названия плана и владельца платежа, их GraphQL не отдаёт.
+        subscription = (try? await client.getSubscriptions())?.main
         featuredInfo = try? await client.getFeaturedInfo()
     }
 }
@@ -67,8 +70,19 @@ private struct AccountSection: View {
 // MARK: - Subscription
 
 private struct SubscriptionSection: View {
-    let subscription: Subscription?
+    let subscription: UserSubscription?
     let isLoading: Bool
+
+    /// GraphQL отдаёт дату без таймзоны и с микросекундами («2028-07-24T20:59:59.999000»),
+    /// поэтому ISO8601DateFormatter её не берёт. Секунды — последнее, что нам важно.
+    private var expiration: String? {
+        guard let raw = subscription?.expirationDate else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        guard let date = formatter.date(from: String(raw.prefix(19))) else { return nil }
+        return date.formatted(.dateTime.day().month(.wide).year())
+    }
 
     var body: some View {
         Section("Подписка") {
@@ -76,18 +90,22 @@ private struct SubscriptionSection: View {
                 ProgressView()
                     .controlSize(.small)
             } else if let sub = subscription {
-                LabeledContent("План", value: sub.title)
+                LabeledContent("План", value: sub.category ?? sub.name)
                 LabeledContent("Статус", value: sub.status)
-                LabeledContent("Цена", value: String(format: "%.0f ₽", sub.planPrice))
-                LabeledContent("Действует до", value: sub.expirationDate.formatted(.dateTime.day().month(.wide).year()))
+                if let price = sub.price ?? sub.subscriptionType?.price {
+                    LabeledContent("Цена", value: String(format: "%.0f ₽", price))
+                }
+                if let expiration {
+                    LabeledContent("Действует до", value: expiration)
+                }
                 if sub.isTrial {
                     LabeledContent("Пробный период", value: "Да")
                 }
-                if sub.hasPremium {
-                    LabeledContent("Премиум", value: "Да")
+                if sub.isPrime {
+                    LabeledContent("Прайм", value: "Да")
                 }
-                if let payment = sub.paymentDetails {
-                    LabeledContent("Владелец", value: payment.isOwner ? "Да" : "Нет")
+                if sub.hasRecurrent {
+                    LabeledContent("Автопродление", value: "Да")
                 }
             } else {
                 Text("Нет активной подписки")
@@ -163,6 +181,23 @@ private struct MenuBarSection: View {
                     .joined(separator: ",")
             }
         )
+    }
+}
+
+// MARK: - Профиль сессии
+
+private struct SessionProfileSection: View {
+    @AppStorage(SessionProfile.enabledKey) private var isEnabled = false
+
+    var body: some View {
+        Section("Сеть") {
+            Toggle("Мобильный профиль сессии", isOn: $isEnabled)
+            Text("Меняет строку клиента и добавляет сессионные заголовки. "
+                + "Применится после перезапуска. Помогает ли против ограничения доступа — "
+                + "не проверено, тумблер нужен для сравнения.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 }
 

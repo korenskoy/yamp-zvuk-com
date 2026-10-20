@@ -7,6 +7,7 @@ struct PlaylistView: View {
     @Environment(PlayerService.self) private var playerService
     @Environment(CacheService.self) private var cacheService
     @Environment(CollectionService.self) private var collectionService
+    @Environment(LogStore.self) private var logStore
     @State private var viewModel: PlaylistViewModel
     @State private var showRenameSheet = false
     @State private var newName = ""
@@ -40,10 +41,8 @@ struct PlaylistView: View {
         }
     }
 
-    private func isOwnPlaylist(_ playlist: Playlist) -> Bool {
-        guard let userId = playlist.userId,
-              let currentId = appState.currentUser?.id else { return false }
-        return userId == String(currentId)
+    private func isOwn(_ playlist: Playlist) -> Bool {
+        appState.isOwnedByCurrentUser(userId: playlist.userId)
     }
 
     private func playlistContent(_ playlist: Playlist) -> some View {
@@ -51,7 +50,7 @@ struct PlaylistView: View {
             VStack(alignment: .leading, spacing: 16) {
                 PlaylistHeaderView(
                     playlist: playlist,
-                    isOwnPlaylist: isOwnPlaylist(playlist),
+                    isOwnPlaylist: appState.isOwnedByCurrentUser(userId: playlist.userId),
                     isLiked: collectionService.isPlaylistLiked(playlist.id),
                     onPlay: {
                         if !playlist.tracks.isEmpty {
@@ -97,13 +96,24 @@ struct PlaylistView: View {
                                     .foregroundStyle(.secondary)
                                     .frame(width: 24, alignment: .trailing)
 
-                                TrackRowView(track: track) {
-                                    playerService.playQueue(
-                                        playlist.tracks,
-                                        context: .playlist(id: playlist.id),
-                                        startAt: index
-                                    )
-                                }
+                                TrackRowView(
+                                    track: track,
+                                    onPlay: {
+                                        playerService.playQueue(
+                                            playlist.tracks,
+                                            context: .playlist(id: playlist.id),
+                                            startAt: index
+                                        )
+                                    },
+                                    onRemoveFromPlaylist: isOwn(playlist) ? {
+                                        Task {
+                                            await viewModel.removeTrack(
+                                                track.id, client: appState.client,
+                                                cache: cacheService, logStore: logStore
+                                            )
+                                        }
+                                    } : nil
+                                )
                             }
                         }
                     }

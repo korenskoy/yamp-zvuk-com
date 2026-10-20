@@ -5,18 +5,23 @@ struct TrackRowView<Trailing: View>: View {
     let track: SimpleTrack
     let trailing: Trailing
     let onPlay: () -> Void
+    /// Задан только там, где трек показан внутри плейлиста.
+    var onRemoveFromPlaylist: (() -> Void)?
     @Environment(PlayerService.self) private var playerService
     @Environment(CollectionService.self) private var collectionService
     @Environment(AppState.self) private var appState
+    @Environment(LogStore.self) private var logStore
 
     init(
         track: SimpleTrack,
         @ViewBuilder trailing: () -> Trailing = { EmptyView() },
-        onPlay: @escaping () -> Void
+        onPlay: @escaping () -> Void,
+        onRemoveFromPlaylist: (() -> Void)? = nil
     ) {
         self.track = track
         self.trailing = trailing()
         self.onPlay = onPlay
+        self.onRemoveFromPlaylist = onRemoveFromPlaylist
     }
 
     private var isLiked: Bool {
@@ -104,6 +109,31 @@ struct TrackRowView<Trailing: View>: View {
                     appState.selectedDestination = .release(id: releaseId)
                 }
             }
+
+            Button("Похожие треки") {
+                Task {
+                    guard let client = appState.client else { return }
+                    do {
+                        let related = try await client.getRelatedTracks(track.id, limit: 30)
+                        guard !related.isEmpty else {
+                            logStore.appendLocal(
+                                operation: "getRelatedTracks \(track.id)",
+                                error: "сервис не вернул похожих треков"
+                            )
+                            return
+                        }
+                        playerService.playQueue(related, context: .radioTrack(id: track.id))
+                    } catch {
+                        appState.appError = AppError.from(error)
+                    }
+                }
+            }
+
+            if let onRemoveFromPlaylist {
+                Button("Убрать из плейлиста", role: .destructive, action: onRemoveFromPlaylist)
+            }
+
+            Divider()
 
             Button("Скопировать ссылку") {
                 if let url = ShareService.url(for: .track(id: track.id)) {

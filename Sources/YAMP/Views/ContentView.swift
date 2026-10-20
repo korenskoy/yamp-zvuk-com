@@ -7,10 +7,19 @@ struct ContentView: View {
     @Environment(CollectionService.self) private var collectionService
     @State private var searchViewModel = SearchViewModel()
 
-    var body: some View {
-        @Bindable var collectionService = collectionService
+    /// Один алерт на два канала: ошибки коллекции и ошибки действий без view model.
+    private var anyError: Binding<AppError?> {
+        Binding(
+            get: { collectionService.appError ?? appState.appError },
+            set: { _ in
+                collectionService.appError = nil
+                appState.appError = nil
+            }
+        )
+    }
 
-        return VStack(spacing: 0) {
+    var body: some View {
+        VStack(spacing: 0) {
             NavigationSplitView {
                 SidebarView()
             } detail: {
@@ -69,7 +78,7 @@ struct ContentView: View {
         .task {
             logStore.attach(to: appState.client)
         }
-        .errorAlert($collectionService.appError)
+        .errorAlert(anyError)
     }
 
     @ViewBuilder
