@@ -87,13 +87,7 @@ struct EditorialPlaylistCardView: View {
     }
 
     private var placeholderView: some View {
-        RoundedRectangle(cornerRadius: 10)
-            .fill(.quaternary)
-            .overlay {
-                Image(systemName: "music.note.list")
-                    .font(.largeTitle)
-                    .foregroundStyle(.secondary)
-            }
+        CoverPlaceholderView()
     }
 
     private func playPlaylist() async {

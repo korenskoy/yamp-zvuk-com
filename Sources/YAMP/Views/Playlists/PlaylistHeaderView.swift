@@ -52,28 +52,7 @@ struct PlaylistHeaderView: View {
     }
 
     private var coverImage: some View {
-        Group {
-            if let imageURL = playlist.image?.getURL(width: 400, height: 400),
-               let url = URL(string: imageURL) {
-                CachedAsyncImage(url: url) { image in
-                    image.scaledToFill()
-                } placeholder: {
-                    placeholderView
-                }
-            } else {
-                placeholderView
-            }
-        }
-    }
-
-    private var placeholderView: some View {
-        RoundedRectangle(cornerRadius: 10)
-            .fill(.quaternary)
-            .overlay {
-                Image(systemName: "music.note.list")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.secondary)
-            }
+        PlaylistCoverView(image: playlist.image, tracks: playlist.tracks, cornerRadius: 12)
     }
 
     private var playlistActions: some View {

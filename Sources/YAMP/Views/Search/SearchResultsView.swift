@@ -202,7 +202,8 @@ struct SearchResultsView: View {
     }
 
     private func adaptiveCard(image: ZvukMusic.Image?, title: String, subtitle: String?) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        let placeholderView = CoverPlaceholderView()
+        return VStack(alignment: .leading, spacing: 6) {
             Group {
                 if let src = image?.getURL(width: 360, height: 360),
                    let url = URL(string: src) {
@@ -231,16 +232,6 @@ struct SearchResultsView: View {
                     .lineLimit(2)
             }
         }
-    }
-
-    private var placeholderView: some View {
-        RoundedRectangle(cornerRadius: 10)
-            .fill(.quaternary)
-            .overlay {
-                Image(systemName: "music.note.list")
-                    .font(.largeTitle)
-                    .foregroundStyle(.secondary)
-            }
     }
 
     // MARK: - Horizontal scrolls (for Top tab)
